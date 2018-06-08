@@ -40,13 +40,19 @@ solve(a == L, u, bc)
 import matplotlib.pyplot as plt
 
 
-# Plot solution and mesh
-plot(u)
-plot(mesh)
 
-# Save solution to file in VTK format
-vtkfile = File('poisson/solution.pvd')
-vtkfile << u
+File('saved_mesh.xml') << mesh
+File('saved_u.xml') << u
+
+mesh_old = Mesh('saved_mesh.xml')
+V_old = FunctionSpace(mesh_old, 'P', 1)
+u_old = Function(V_old, 'saved_u.xml')
+
+
+
+# Plot solution and mesh
+plot(u_old)
+plot(mesh)
 
 # Compute error in L2 norm
 error_L2 = errornorm(u_D, u, 'L2')

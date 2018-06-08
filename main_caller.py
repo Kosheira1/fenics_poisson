@@ -22,6 +22,11 @@ sem_width = 2.7 # [um] Width of the semiconductor channel
 sem_relperm = 1 # Relative permittivity of semiconductor channel
 doping = -15.2   # [C/um^2] Acceptor doping concentration
 
+# Create a custom mesh or read it from a file
+
+mesh = RectangleMesh(Point(0,0), Point(1,3), 20, 360)
+File('saved_mesh.xml') << mesh
+
 #Bias points
 volt_list_low = [float(x)/10 for x in range(2, 20, 4)] # [V]
 volt_list_high = [float(x)/10 for x in range(25, 80, 7)] # [V]
@@ -36,7 +41,7 @@ TotalCharge_points = []
 for idx, bias in enumerate(volt_list):
 
 	print("Bias Point: " + str(bias)  +  " The index, at which the bias point is extracted: " + str(idx))	
-	(u_v, C_v, Q_v) = run_solver(sem_width, sem_relperm, doping, bias)
+	(u_v, C_v, Q_v) = run_solver(mesh, sem_width, sem_relperm, doping, bias)
 	Solution_points.append(u_v)
 	Permittivity_points.append(C_v)
 	TotalCharge_points.append(Q_v)
@@ -51,9 +56,10 @@ print(cap_dat)
 np.savetxt('capdataV1.dat', cap_dat, fmt='%.3f')
 plot_diff_cap('capdataV1.dat')
 
-# Plot the first bias point
+# Plot the first (or any) bias point
 
 u = Solution_points[0]
+File('saved_u.xml') << u
 
 #Plot result
 plt.figure(num=0, figsize=(16,12))

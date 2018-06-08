@@ -23,7 +23,7 @@ def solver(f, Permi, V, bcs, degree=2, u_prev=Constant(-0.0)):
 
 	return u
 
-def run_solver(sem_width, sem_relperm, doping, volt_bias):
+def run_solver(mesh, sem_width, sem_relperm, doping, volt_bias):
 	"Run solver to compute and post-process solution"
 
 	#Material Parameters
@@ -31,9 +31,7 @@ def run_solver(sem_width, sem_relperm, doping, volt_bias):
 	epsilon_0 = 1.0 #[F*um^-1]
 	z_thick = 1.0   #[um]
 
-	#Create mesh and define function space
-	# 108, 60, 48
-	mesh = RectangleMesh(Point(0,0), Point(1,3), 20, 360)
+	# Create the function space
 	V = FunctionSpace(mesh, 'P', 2) #maybe re-define degree
 	bcs = setup_boundaries(V, volt_bias)
 
