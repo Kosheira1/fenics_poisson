@@ -1,8 +1,8 @@
 from fenics import *
 
-# Method to define domains
+# Method to define domains and interfaces
 def setup_domains(width):
-	""
+	"Setup the layer structure in the order from depth-coordinate=0 to highest. Make sure to provide lower and upper bound"
 	FE = Ferroelectric(width)
 	SC = Sem_channel(width)
 
@@ -25,6 +25,15 @@ class Ferroelectric(SubDomain):
 		SubDomain.__init__(self) # Call base class constructor
 	def inside(self, x, on_boundary):
 		return x[1] >= self.width - self.tol
+
+# Boundary between Layers
+class LayerBoundary(SubDomain):
+	def __init__(self,loc):
+		self.loc = loc
+		SubDomain.__init__(self) # Call base class constructor
+	def inside(self, x, on_boundary):
+		tol = 0.2
+		return near(x[1], self.loc, tol)
 
 # Method to define essential boundary conditions
 def setup_boundaries(V, volt_bias):

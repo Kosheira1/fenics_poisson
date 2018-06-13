@@ -23,37 +23,29 @@ def solver(f, Permi, V, bcs, degree=2, u_prev=Constant(-0.0)):
 
 	return u
 
-def run_solver(mesh, sem_width, sem_relperm, doping, volt_bias):
+def run_solver(mesh, dimensions, materials, permi, doping, volt_bias):
 	"Run solver to compute and post-process solution"
-	#Material Parameters
-	epsilon_0 = 1.0 #[F*um^-1]
-	z_thick = 1.0   #[um]
 
 	# Create the function space
 	V = FunctionSpace(mesh, 'P', 2) #maybe re-define degree
 	bcs = setup_boundaries(V, volt_bias)
 
-	# Define a Mesh Function which stores material information
-	materials = MeshFunction('size_t', mesh, 2)
-
-	# Define Domains and assign material identifier
-	(FE, SC) = setup_domains(sem_width)
-	FE.mark(materials, 0)
-	SC.mark(materials, 1)
-
+	#Create the Permittivity Tensor
 	Con_M = Permittivity_Tensor_M(materials, 0.0, degree=2)
-
-	marked_cells = SubsetIterator(materials, 0)
-
-	"""
-	for cell in marked_cells:
-		print('%2d %3f' % (cell.index(), cell.midpoint().x()))
-	"""
-
 	C = as_matrix(((Con_M[0], Con_M[1]), (Con_M[1], Con_M[2])))
 
 	#Initialize Charge Expression
 	f = Charge(degree=2)
+
+	sem_width = 0.0 # Initialize sem_width
+
+	marked_cells = SubsetIterator(materials, 1)
+	for cell in marked_cells:
+		print (str(cell.index()))
+		sem_width = dimensions[cell.index()]
+		break 
+
+	print(str(sem_width))
 
 	#Run an Initial solution
 	#Find actual depletion width using a simple bisection method. Will be replaced with Fermi-level adaptation in the future.
@@ -63,7 +55,7 @@ def run_solver(mesh, sem_width, sem_relperm, doping, volt_bias):
 	a_init = 0.0
 	b_init = sem_width
 
-	deplwidth_init = 1.0 # [um]
+	deplwidth_init = 0.5 # [um]
 
 	#Evaluate Potential at lower bound of domain
 	point  = (0.5, 1E-14)

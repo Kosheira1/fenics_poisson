@@ -1,12 +1,12 @@
 """
 Main File. Invokes all solver functionality to solve the tensor-weighted Poisson equation. The displacement-field dependent Permittivity can be defined and the solver is ran.
 """
-
 from __future__ import print_function
 from refactor_solver import *
 import numpy as np
 from plot_differential_cap import *
 from plot_results import *
+from setup_domains import *
 
 # Import plot library
 import matplotlib.pyplot as plt
@@ -27,14 +27,48 @@ User Input Part:
 """
 
 # Define Device Variables
-sem_width = 2.7 # [um] Width of the semiconductor channel
+sem_width = 2.5 # [um] Width of the semiconductor channel
+ins_width = 0.0 # [um] Width of the insulator layer
+FE_width  = 0.5 # [um] Width of the ferroelectric layer
 sem_relperm = 1 # Relative permittivity of semiconductor channel
-doping = -15.2   # [C/um^2] Acceptor doping concentration
-epsilon_FE = -3.0 # [] Initial Guess for out-of-plane FE permittivity
+doping = -35.2   # [C/um^2] Acceptor doping concentration
+epsilon_FE = -3.4 # [] Initial Guess for out-of-plane FE permittivity
+epsilon_0 = 1.0 #[F*um^-1]
+z_thick = 1.0   #[um]
 
-# Create a custom mesh and save it to a file or read it from a file
-mesh = RectangleMesh(Point(0,0), Point(1,3), 20, 360)
-File('saved_mesh.xml') << mesh
+# Define Domains and assign material identifier
+(FE, SC) = setup_domains(sem_width)
+
+# Create a custom mesh or read it from a file
+#420
+mesh = RectangleMesh(Point(0,0), Point(1,sem_width+FE_width), 20, 420)
+
+# Define Interface markers
+edge_markers = MeshFunction('bool', mesh, 1, False)
+LayerBoundary(sem_width).mark(edge_markers, True)
+
+#refine mesh
+adapt(mesh, edge_markers)
+mesh = mesh.child()
+#File('saved_mesh.xml') << mesh
+
+# Define a Mesh Function which stores material labels
+materials = MeshFunction('size_t', mesh, 2)
+
+FE.mark(materials, 0)
+SC.mark(materials, 1)
+
+# Define a Mesh Function which stores material dimensions
+dimensions = MeshFunction('double', mesh, 2)
+
+FE.mark(dimensions, FE_width)
+SC.mark(dimensions, sem_width)
+
+#Define a Mesh Function with initial permittivity values
+permi = MeshFunction('double', mesh, 2)
+
+FE.mark(permi, epsilon_FE)
+SC.mark(permi, sem_relperm)
 
 #Select supported carrier model: 'Depletion'
 c_model = 'Depletion'
@@ -43,9 +77,10 @@ c_model = 'Depletion'
 FE_model = 'const_negative'
 
 #Bias points
-volt_list_low = [float(x)/10 for x in range(2, 20, 4)] # [V]
-volt_list_high = [float(x)/10 for x in range(25, 80, 7)] # [V]
-volt_list = volt_list_low+volt_list_high
+volt_list_ultra = [0.12] # [V]
+volt_list_low = [float(x)/10 for x in range(2, 63, 9)] # [V]
+volt_list_high = [float(x)/10 for x in range(73, 110, 25)] # [V]
+volt_list = volt_list_ultra+volt_list_low+volt_list_high
 
 # Main Function: Solve Problem for all defined bias points
 Solution_points = []
@@ -55,21 +90,23 @@ TotalCharge_points = []
 for idx, bias in enumerate(volt_list):
 
 	print("Bias Point: " + str(bias)  +  " The index, at which the bias point is extracted: " + str(idx))	
-	(u_v, C_v, Q_v) = run_solver(mesh, sem_width, sem_relperm, doping, bias)
+	(u_v, C_v, Q_v) = run_solver(mesh, dimensions, materials, permi, doping, bias)
 	Solution_points.append(u_v)
 	Permittivity_points.append(C_v)
 	TotalCharge_points.append(Q_v)
 	print("")
 
+
 # Write Charge and voltage value in file
 cap_dat = np.array([volt_list, TotalCharge_points])
 cap_dat = cap_dat.T
 print(cap_dat)
-np.savetxt('capdataV1.dat', cap_dat, fmt='%.3f')
-plot_diff_cap('capdataV1.dat')
+np.savetxt('capdata' + 'Model:_' + FE_model + '_' + str(epsilon_FE) + '.dat', cap_dat, fmt='%.3f')
+plot_diff_cap('capdata' + 'Model:_' + FE_model + '_' + str(epsilon_FE) + '.dat')
 
 # Plot the first (or any) bias point
-u = Solution_points[0]
-File('saved_u.xml') << u
+u = Solution_points[3]
+#File('saved_u.xml') << u
 
-plot_solution('saved_mesh.xml', 'saved_u.xml')
+#plot_solution('saved_mesh.xml', 'saved_u'+ 'Model:_' + FE_model + '_' + str(epsilon_FE) +'_.xml')
+
