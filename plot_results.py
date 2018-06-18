@@ -41,8 +41,8 @@ def plot_solution(filename_mesh, *filename_solution):
 	grad_u=project(grad(u), W)
 	point = (0.4, 0.61)
 	valueuu = np.array(grad_u(point))
-	print("The y-component of the electric field at x=0.4 and y=" +"{0:.2f}".format(point[1]) +" is " + "{0:.2f}".format(valueuu[1]/100) + "MV/cm")
-	print("The x-component of the electric field at x=0.4 and y=" +"{0:.2f}".format(point[1]) +" is " + "{0:.2f}".format(valueuu[0]/100) + "MV/cm")
+	print("The y-component of the electric field at x=0.4 and y=" +"{0:.3f}".format(point[1]) +" is " + "{0:.2f}".format(valueuu[1]/100) + "MV/cm")
+	print("The x-component of the electric field at x=0.4 and y=" +"{0:.3f}".format(point[1]) +" is " + "{0:.2f}".format(valueuu[0]/100) + "MV/cm")
 	value2 = u(point)
 	print("The Potential at x=0.4 and y=" +"{0:.2f}".format(point[1]) +" is " + "{0:.2f}".format(value2) + "V")
 	plt.figure(num=1, figsize=(16,12))
@@ -50,10 +50,10 @@ def plot_solution(filename_mesh, *filename_solution):
 	plt.xlabel('x-coordinate [nm]')
 	plt.ylabel('y-coordinate [nm]')
 
-	#Curve Plot along y=0.5
+	#Curve Plot along x=0.5
 	plt.figure(num=2, figsize=(16,12))
-	tolerance = 0.001 #  
-	y = np.linspace(0 + tolerance, 3 - tolerance, 101)
+	tolerance = 0.1 #  
+	y = np.linspace(0 + tolerance, 1 - tolerance, 101)
 	points = [(0.5, y_prime) for y_prime in y] #Create tuples of 2D points
 	pot_line = np.array([u(point) for point in points])
 	plt.plot(y, pot_line, 'k', linewidth=2)
@@ -66,7 +66,7 @@ def plot_solution(filename_mesh, *filename_solution):
 	pot_line = np.array([grad_u(point) for point in points])
 	plt.figure(num=3, figsize=(16,12))
 	plt.plot(y, pot_line[:,1]/100, linewidth=3)
-	plt.title('x-Component of Electric Field along x=0.5')
+	plt.title('y-Component of Electric Field along x=0.5')
 	plt.grid(True)
 	plt.xlabel('y-coordinate [nm]')
 	plt.ylabel('Electric Field [MV/cm]')

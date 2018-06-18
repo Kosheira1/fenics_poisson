@@ -2,50 +2,26 @@ from fenics import *
 import numpy as np
 from setup_domains import *
 from Expressions import *
+from solver import *
 
 # Import plot library
 import matplotlib.pyplot as plt
 
-def solver(f, Permi, V, bcs, degree=2, u_prev=Constant(-0.0)):
-	"""
-	Solves non-linear Poisson equation on [0,1]x[0,3] with Langrange elements
-	"""
-	# Define variational problem
-	u = TrialFunction(V)
-	v = TestFunction(V)
-	g = Constant(-0.0)
-	a = inner(Permi*grad(u), grad(v))*dx
-	L = f*v*dx + g*v*ds
-
-	# Compute solution
-	u = Function(V)
-	solve(a==L, u, bcs)
-
-	return u
-
-def run_solver(mesh, dimensions, materials, permi, doping, volt_bias):
+def run_solver_const(mesh, dimensions, materials, permi, doping, volt_bias):
 	"Run solver to compute and post-process solution"
 
 	# Create the function space
 	V = FunctionSpace(mesh, 'P', 2) #maybe re-define degree
-	bcs = setup_boundaries(V, volt_bias)
+	bcs = setup_boundaries(V, volt_bias, dimensions[0]+dimensions[1])
 
 	#Create the Permittivity Tensor
-	Con_M = Permittivity_Tensor_M(materials, 0.0, degree=2)
+	Con_M = Permittivity_Tensor_M(materials, permi, 0.0, degree=2)
 	C = as_matrix(((Con_M[0], Con_M[1]), (Con_M[1], Con_M[2])))
 
 	#Initialize Charge Expression
 	f = Charge(degree=2)
 
-	sem_width = 0.0 # Initialize sem_width
-
-	marked_cells = SubsetIterator(materials, 1)
-	for cell in marked_cells:
-		print (str(cell.index()))
-		sem_width = dimensions[cell.index()]
-		break 
-
-	print(str(sem_width))
+	sem_width = dimensions[0] # Initialize sem_width
 
 	#Run an Initial solution
 	#Find actual depletion width using a simple bisection method. Will be replaced with Fermi-level adaptation in the future.
@@ -95,5 +71,5 @@ def run_solver(mesh, dimensions, materials, permi, doping, volt_bias):
 	#Initialize Permittivity based on previous results
 	#To-DO mah guy
 
-	Con_trial = Permittivity_Tensor_M(materials, flux_y, degree=2)
+	Con_trial = Permittivity_Tensor_M(materials, permi, flux_y, degree=2)
 	return (u, Con_M, deplwidth_init*doping)

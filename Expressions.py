@@ -17,16 +17,15 @@ class Charge(Expression):
 #Defining the elements of the two-dimensional dielectric tensor through the material mesh function, values might depend on previously computed polarization fields.
 
 class Permittivity_Tensor_M(Expression):
-	def __init__(self, materials, flux, **kwargs):
-		self.materials, self.flux = materials, flux
+	def __init__(self, materials, permi, flux, **kwargs):
+		self.materials, self.permi, self.flux = materials, permi, flux
 
 	def eval_cell(self, values, x, cell):
-
 		#Iterate over ferroelectric material points
 		if self.materials[cell.index] == 0:
 			values[0]=1.0  #e_xx
 			values[1]=0.0  #e_xy = e_yx
-			values[2]=-3.0 #e_yy
+			values[2]=self.permi[cell.index] #e_yy
 
 		#Iterate over semiconductor channel material points
 		elif self.materials[cell.index] == 1:
