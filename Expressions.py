@@ -36,7 +36,7 @@ class Permittivity_Tensor_M(Expression):
 		else:
 			values[0]=1.0	#e_xx
 			values[1]=0.0	#e_xy = e_yx
-			values[2]=1.0	#e_yy			
+			values[2]=1.0	#e_yy
 
 	def value_shape(self):
 		return (3,)

@@ -2,7 +2,7 @@ from fenics import *
 import numpy as np
 from setup_domains import *
 from Expressions import *
-from solver import *
+from solver import solver
 
 # Import plot library
 import matplotlib.pyplot as plt
