@@ -15,6 +15,9 @@ from setup_domains import *
 import matplotlib
 import matplotlib.pyplot as plt
 
+import os
+os.chdir('Saturation_trial')
+
 font = {'weight': 'bold',
         'size': 22}
 
