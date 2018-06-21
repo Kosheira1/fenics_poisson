@@ -46,7 +46,7 @@ def run_solver_sat(mesh, dimensions, materials, permi, doping, volt_bias):
         point = (0.5, 0.5)
         plt.scatter(elec_y(point), pol_y(point), s=500, c='red', label='Location in P-E space')
         plt.legend(loc=1, bbox_to_anchor=(1, 0.5))
-        plt.show()
+        # plt.show()
 
         for cells in marked_cells:
             x1 = cells.midpoint().x()
@@ -73,7 +73,9 @@ def run_solver_sat(mesh, dimensions, materials, permi, doping, volt_bias):
     print('Value of P-Field at point: ' + "{0:.3f}".format(pol_y(point)) + ' (C*m^-2)')
     print('Error: ' + "{0:.3f}".format(np.interp(elec_y(point), E_values, P_values) - flux_y(point) + elec_y(point)))
 
-    return(u, Con_M, 0.0)
+    point = (0.5, 0.5)
+
+    return(u, Con_M, -flux_y(point))
 
 
 def read_hysteresis(filename):

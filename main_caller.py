@@ -16,6 +16,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 import os
+if not os.path.exists('Saturation_trial'): os.mkdir('Saturation_trial')
 os.chdir('Saturation_trial')
 
 font = {'weight': 'bold',
@@ -72,7 +73,7 @@ dimensions = [sem_width, FE_width]
 permi = MeshFunction('double', mesh, 2)
 
 FE.mark(permi, epsilon_FE)
-#SC.mark(permi, sem_relperm)
+# SC.mark(permi, sem_relperm)
 
 # Select supported carrier model: 'Depletion'
 c_model = 'Depletion'
@@ -86,8 +87,8 @@ volt_list_low = [float(x) / 10 for x in range(2, 63, 9)]  # [V]
 volt_list_high = [float(x) / 10 for x in range(73, 110, 25)]  # [V]
 volt_list = volt_list_ultra + volt_list_low + volt_list_high
 
-#volt_list = [float(x) for x in np.linspace(-6, 6, 10)]
-volt_list = [3.0]
+# volt_list = [float(x) for x in np.linspace(-6, 6, 10)]
+volt_list = np.linspace(-8, 8, 20)
 
 # Main Function: Solve Problem for all defined bias points
 Solution_points = []
@@ -106,8 +107,10 @@ for idx, bias in enumerate(volt_list):
     elif (FE_model == 'saturation'):
         print('Warning: FE model not yet ready')
         (u_v, C_v, Q_v) = run_solver_sat(mesh, dimensions, materials, permi, doping, bias)
-
+        Permittivity_points.append(C_v)
+        TotalCharge_points.append(Q_v)
         Solution_points.append(u_v)
+
     elif (FE_model == 'S_curve'):
         print('Warning: FE model not yet ready')
 
@@ -116,18 +119,18 @@ for idx, bias in enumerate(volt_list):
 
     print("")
 
-"""
+
 # Write Charge and voltage value in file and create capacitance plot
 cap_dat = np.array([volt_list, TotalCharge_points])
 cap_dat = cap_dat.T
 print(cap_dat)
 np.savetxt('capdata' + 'Model:_' + FE_model + '_' + str(epsilon_FE) + '.dat', cap_dat, fmt='%.3f')
 plot_diff_cap('capdata' + 'Model:_' + FE_model + '_' + str(epsilon_FE) + '.dat')
-"""
+
 
 # Plot the first (or any) bias point
 solution_name = 'Model:_' + FE_model + '_' + str(epsilon_FE) + '_.xml'
 u = Solution_points[0]
 File(solution_name) << u
 
-#plot_solution(mesh_name, solution_name)
+# plot_solution(mesh_name, solution_name)
