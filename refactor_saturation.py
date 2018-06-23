@@ -29,6 +29,9 @@ def run_solver_sat(mesh, dimensions, materials, permi, doping, volt_bias):
     error = 1E+4
     counter = 1
 
+    P_space = []
+    E_space = []
+
     while (abs(error) > eta):
         # Create the Permittivity Tensor
         Con_M = Permittivity_Tensor_M(materials, permi, 0.0, degree=2)
@@ -42,11 +45,9 @@ def run_solver_sat(mesh, dimensions, materials, permi, doping, volt_bias):
         error_max = 0
 
         # Plot state of Ferroelectric
-        plot_routine(counter)
         point = (0.5, 0.5)
-        plt.scatter(elec_y(point), pol_y(point), s=500, c='red', label='Location in P-E space')
-        plt.legend(loc=1, bbox_to_anchor=(1, 0.5))
-        # plt.show()
+        P_space.append(pol_y(point))
+        E_space.append(elec_y(point))
 
         for cells in marked_cells:
             x1 = cells.midpoint().x()
@@ -74,6 +75,13 @@ def run_solver_sat(mesh, dimensions, materials, permi, doping, volt_bias):
     print('Error: ' + "{0:.3f}".format(np.interp(elec_y(point), E_values, P_values) - flux_y(point) + elec_y(point)))
 
     point = (0.5, 0.5)
+
+    plot_routine(int(volt_bias))
+
+    num_f = 3 * len(P_space)
+    rgb = (np.arange(float(num_f)) / num_f).reshape(len(P_space), 3)
+    # rgb = np.random.random((len(P_space), 3))
+    plt.scatter(E_space, P_space, s=500, facecolors=rgb, label='Location in P-E space')
 
     return(u, Con_M, -flux_y(point))
 

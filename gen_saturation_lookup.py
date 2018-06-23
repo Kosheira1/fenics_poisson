@@ -1,6 +1,9 @@
 import numpy as np
 
-# Create a saturation curve with constant material polarizability between -2.5, 2.5 kv/cm and saturation beyond
+import matplotlib.pyplot as plt
+import matplotlib
+
+# Create a saturation curve with constant material polarizability between -5, 5 kv/cm and saturation beyond
 x_lower = np.linspace(-6, -4, 10)
 x_middle = np.linspace(-2.5, 2.5, 20)
 x_upper = np.linspace(4, 6, 10)
@@ -22,8 +25,6 @@ np.savetxt('saturation_PE.dat', data, fmt='%.3f')
 xvals = np.linspace(-7, 7, 100)
 yinterp = np.interp(xvals, x, y)
 
-import matplotlib.pyplot as plt
-import matplotlib
 
 # General Plotting Settings
 font = {'weight': 'bold',

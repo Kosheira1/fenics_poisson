@@ -16,7 +16,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 import os
-if not os.path.exists('Saturation_trial'): os.mkdir('Saturation_trial')
+if not os.path.exists('Saturation_trial'):
+    os.mkdir('Saturation_trial')
 os.chdir('Saturation_trial')
 
 font = {'weight': 'bold',
