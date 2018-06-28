@@ -5,15 +5,15 @@ from fenics import *
 
 def setup_domains(width, FE_width):
     "Setup the layer structure in the order from depth-coordinate=0 to highest. Make sure to provide lower and upper bound"
-    #SC = Sem_channel(0.0, width)
+    SC = ep_layer(0.0, width)
     FE = Ferroelectric(width, width + FE_width)
 
-    return FE
+    return (SC, FE)
 
 # Semiconductor Channel
 
 
-class Sem_channel(SubDomain):
+class ep_layer(SubDomain):
     def __init__(self, lower, upper):
         self.lower, self.upper = lower, upper
         self.tol = 1E-12

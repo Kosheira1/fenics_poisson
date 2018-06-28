@@ -80,7 +80,6 @@ def run_solver_sat(mesh, dimensions, materials, permi, doping, volt_bias):
 
     num_f = 3 * len(P_space)
     rgb = (np.arange(float(num_f)) / num_f).reshape(len(P_space), 3)
-    # rgb = np.random.random((len(P_space), 3))
     plt.scatter(E_space, P_space, s=500, facecolors=rgb, label='Location in P-E space')
 
     return(u, Con_M, -flux_y(point))
