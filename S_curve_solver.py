@@ -31,7 +31,7 @@ def run_solver_S(mesh, dimensions, materials, permi, doping, volt_bias):
     up_E = E_values[np.where(P_values > 6.0)]
 
     # Create the function space and setup boundary conditions
-    V = FunctionSpace(mesh, 'P', 2)  # maybe re-define degree
+    V = FunctionSpace(mesh, 'P', 1)  # maybe re-define degree
     bcs = setup_boundaries(V, volt_bias, dimensions[0] + dimensions[1])
 
     # Initialize Charge Expression
@@ -48,7 +48,7 @@ def run_solver_S(mesh, dimensions, materials, permi, doping, volt_bias):
     E_space = []
 
     # Solving Poisson's equation and updating relative permittivity in a loop. This approach is used because the field dependence of polarization is not explicitly used in the PDE formulation!!
-    while (abs(error) > eta and counter < 5):
+    while (abs(error) > eta and counter < 6):
         # Create the Permittivity Tensor for the anisotropic Poisson equation, FE material only exhibits field dependent permittivity in confinement direction!
         Con_M = Permittivity_Tensor_M(materials, permi, 0.0, degree=2)
         C = as_matrix(((Con_M[0], Con_M[1]), (Con_M[1], Con_M[2])))
@@ -92,7 +92,7 @@ def run_solver_S(mesh, dimensions, materials, permi, doping, volt_bias):
                 if (error_temp > error_max):
                     error_max = error_temp
                     print('y-coordinate of max_value: ' + "{0:.5f}".format(y1))
-                if(error_temp > 8E-2 and counter >= 2):
+                if(error_temp > 8E-1 and counter >= 2):
                     print('y-coordinate of high_value: ' + "{0:.5f}".format(y1))
 
                 # TO-DO: State transition condition

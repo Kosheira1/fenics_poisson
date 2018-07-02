@@ -18,7 +18,7 @@ def plot_solution(filename_mesh, *filename_solution):
     # Load Mesh and Solution Data
     mesh_old = Mesh(filename_mesh)
     num = len(filename_solution)
-    V_old = FunctionSpace(mesh_old, 'P', 2)
+    V_old = FunctionSpace(mesh_old, 'P', 1)
     u = Function(V_old, filename_solution[0])  # could theoretically load more solution files here.
 
     # General Plotting Settings
@@ -53,8 +53,8 @@ def plot_solution(filename_mesh, *filename_solution):
 
     # Curve Plot along x=0.5
     plt.figure(num=2, figsize=(16, 12))
-    tolerance = 0.1
-    y = np.linspace(0 + tolerance, 1 - tolerance, 101)
+    tolerance = 0.01
+    y = np.linspace(0 + tolerance, 2 - tolerance, 101)
     points = [(0.5, y_prime) for y_prime in y]  # Create tuples of 2D points
     pot_line = np.array([u(point) for point in points])
     plt.plot(y, pot_line, 'k', linewidth=2)

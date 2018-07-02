@@ -31,9 +31,9 @@ class Permittivity_Tensor_M(Expression):
 
         # Iterate over semiconductor channel material points
         elif self.materials[cell.index] == 1:
-            values[0] = 1.0  # e_xx
+            values[0] = self.permi[cell.index]  # e_xx
             values[1] = 0.0  # e_xy = e_yx
-            values[2] = 1.0  # e_yy
+            values[2] = self.permi[cell.index]  # e_yy
         # Rest should be vaccuum
         else:
             values[0] = 1.0  # e_xx

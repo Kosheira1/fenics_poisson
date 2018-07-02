@@ -4,6 +4,7 @@ Main File. Invokes all solver functionality to solve the tensor-weighted Poisson
 from __future__ import print_function
 
 import numpy as np
+import pandas as pd
 
 from plot_differential_cap import *
 from plot_results import *
@@ -40,10 +41,10 @@ User Input Part:
 sem_width = 1.0  # [um] Width of the semiconductor channel
 ins_width = 0.0  # [um] Width of the insulator layer
 FE_width = 1.0  # [um] Width of the ferroelectric layer
-sem_relperm = 1  # Relative permittivity of semiconductor channel
+sem_relperm = 1.5  # Relative permittivity of semiconductor channel
 doping = -35.2   # [C/um^2] Acceptor doping concentration
 epsilon_FE = -5.0  # [] Initial Guess for out-of-plane FE permittivity
-epsilon_0 = 3.0  # [F*um^-1]
+epsilon_0 = 1.0  # [F*um^-1]
 z_thick = 1.0  # [um]
 
 # Define Domains and assign material identifier
@@ -51,7 +52,16 @@ z_thick = 1.0  # [um]
 
 # Create a custom mesh or read it from a file
 # 420
+# domain = mshr.Rectangle(Point(0, 0), Point(1, sem_width + FE_width))
+# domain.set_subdomain(1, mshr.Rectangle(Point(0, 0), Point(1, sem_width)))
+# domain.set_subdomain(2, mshr.Rectangle(Point(0, sem_width), Point(1, sem_width + FE_width)))
+# mesh = mshr.generate_mesh(domain, 132, "cgal")  # 66, 132
+
 mesh = RectangleMesh(Point(0, 0), Point(1, sem_width + FE_width), 20, 420)
+
+
+plot(mesh)
+plt.show()
 
 # Define Interface markers
 # edge_markers = MeshFunction('bool', mesh, 1, False)
@@ -91,7 +101,7 @@ volt_list_high = [float(x) / 10 for x in range(73, 110, 25)]  # [V]
 volt_list = volt_list_ultra + volt_list_low + volt_list_high
 
 # volt_list = [float(x) for x in np.linspace(-6, 6, 10)]
-volt_list = [0.8]
+volt_list = [0.6]
 
 # Main Function: Solve Problem for all defined bias points
 Solution_points = []
