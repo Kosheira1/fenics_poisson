@@ -8,7 +8,7 @@ from solver import solver
 import matplotlib.pyplot as plt
 
 
-def run_solver_S(mesh, dimensions, materials, permi, doping, volt_bias):
+def run_solver_S(V, mesh, dimensions, materials, permi, doping, volt_bias, max_it):
     '''
     Run solver with a S-curve PE-model, see gen_S_lookup.py for details about physical quantities.
     '''
@@ -30,8 +30,7 @@ def run_solver_S(mesh, dimensions, materials, permi, doping, volt_bias):
     up_P = P_values[np.where(P_values > 6.0)]
     up_E = E_values[np.where(P_values > 6.0)]
 
-    # Create the function space and setup boundary conditions
-    V = FunctionSpace(mesh, 'P', 1)  # maybe re-define degree
+    # Setup boundary conditions
     bcs = setup_boundaries(V, volt_bias, dimensions[0] + dimensions[1])
 
     # Initialize Charge Expression
@@ -40,7 +39,7 @@ def run_solver_S(mesh, dimensions, materials, permi, doping, volt_bias):
     # Initialize Loop Variables, state_init is set to 0 because for zero electric external field, the FE should be in the negative capacitance regime!
     eta = 1E-2
     error = 1E+4
-    counter = 1
+    counter = 0
     state_init = 0  # 0 for neg-cap region, 1 for lower part, 2 for upper part. The lower
 
     # For each bias point we want to track the trajectory of the solution in the P-E space while it converges onto a point on the S-Curve, used for plotting the trajectory and observing convergence!
@@ -48,7 +47,7 @@ def run_solver_S(mesh, dimensions, materials, permi, doping, volt_bias):
     E_space = []
 
     # Solving Poisson's equation and updating relative permittivity in a loop. This approach is used because the field dependence of polarization is not explicitly used in the PDE formulation!!
-    while (abs(error) > eta and counter < 6):
+    while (abs(error) > eta and counter < max_it):
         # Create the Permittivity Tensor for the anisotropic Poisson equation, FE material only exhibits field dependent permittivity in confinement direction!
         Con_M = Permittivity_Tensor_M(materials, permi, 0.0, degree=2)
         C = as_matrix(((Con_M[0], Con_M[1]), (Con_M[1], Con_M[2])))
@@ -73,16 +72,15 @@ def run_solver_S(mesh, dimensions, materials, permi, doping, volt_bias):
             x1 = cells.midpoint().x()
             y1 = cells.midpoint().y()
             point_temp = (x1, y1)
-            if(y1 < 1):
-                print('Something horribly wrong happened')
 
             # Update routine
             if (state_init == 0):
                 # Compare actual state of Polarization vs Electric field to S_curve data
                 error_temp = abs(np.interp(elec_y(point_temp), center_E[::-1], center_P[::-1]) - pol_y(point_temp))
 
-                if(abs(x1 - 0.5) < 5E-2 and abs(y1 - 1.5) < 5E-2):
+                if(abs(x1 - 0.5) < 2E-2 and abs(y1 - 1.5) < 2E-2):
                     print(error_temp)
+                    # print(cells.index())
                 if (error_temp > 1E-2):
                     # Define susceptibility as ratio P/E and update permittivity locally
                     chi_1 = np.interp(elec_y(point_temp), center_E[::-1], center_P[::-1]) / elec_y(point_temp)
@@ -115,8 +113,9 @@ def run_solver_S(mesh, dimensions, materials, permi, doping, volt_bias):
     rgb = (np.arange(float(num_f)) / num_f).reshape(len(P_space), 3)
     plt.scatter(E_space, P_space, s=500, facecolors=rgb, label='Location in P-E space')
     plt.annotate("{0:.2f}".format(volt_bias), (E_space[-1], P_space[-1]))
+    plt.show()
 
-    return(u, Con_M, -flux_y(point))
+    return(u, Con_M, -flux_y(point), P_space, E_space)
 
 
 def read_hysteresis(filename):

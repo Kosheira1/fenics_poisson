@@ -3,7 +3,7 @@ from fenics import *
 
 def solver(f, Permi, V, bcs, degree=2, u_prev=Constant(-0.0)):
     """
-    Solves non-linear Poisson equation on [0,1]x[0,3] with Langrange elements
+    Solves non-linear, tensor-weighted Poisson equation on given function space and given boundary conditions.
     """
     # Define variational problem
     u = TrialFunction(V)

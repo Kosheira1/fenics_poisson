@@ -1,5 +1,5 @@
 """
-Main File. Invokes all solver functionality to solve the tensor-weighted Poisson equation. The displacement-field dependent Permittivity can be defined and the solver is ran.
+Main File. Invokes all solver functionality to solve the tensor-weighted Poisson equation. The displacement-field dependent Permittivity can be defined on all Ferroelectric material points between solver runs.
 """
 from __future__ import print_function
 
@@ -50,7 +50,7 @@ z_thick = 1.0  # [um]
 # Define Domains and assign material identifier
 (SC, FE) = setup_domains(sem_width, FE_width)
 
-# Create a custom mesh or read it from a file
+# Create a custom mesh or read it from a file, create function space
 # 420
 # domain = mshr.Rectangle(Point(0, 0), Point(1, sem_width + FE_width))
 # domain.set_subdomain(1, mshr.Rectangle(Point(0, 0), Point(1, sem_width)))
@@ -58,10 +58,7 @@ z_thick = 1.0  # [um]
 # mesh = mshr.generate_mesh(domain, 132, "cgal")  # 66, 132
 
 mesh = RectangleMesh(Point(0, 0), Point(1, sem_width + FE_width), 20, 420)
-
-
-plot(mesh)
-plt.show()
+V = FunctionSpace(mesh, 'P', 1)
 
 # Define Interface markers
 # edge_markers = MeshFunction('bool', mesh, 1, False)
@@ -101,12 +98,15 @@ volt_list_high = [float(x) / 10 for x in range(73, 110, 25)]  # [V]
 volt_list = volt_list_ultra + volt_list_low + volt_list_high
 
 # volt_list = [float(x) for x in np.linspace(-6, 6, 10)]
-volt_list = [0.6]
+volt_list = [0.05, 0.2, 0.4, 0.7, 0.8]
 
 # Main Function: Solve Problem for all defined bias points
 Solution_points = []
 Permittivity_points = []
 TotalCharge_points = []
+P_it = []
+E_it = []
+max_it = 3  # Defines the maximum allowed iteration number for the Ferroelectric permittivity update routin
 
 for idx, bias in enumerate(volt_list):
     print("Bias Point: " + str(bias) + " The index, at which the bias point is extracted: " + str(idx))
@@ -124,23 +124,41 @@ for idx, bias in enumerate(volt_list):
         Solution_points.append(u_v)
 
     elif (FE_model == 'S_curve'):
-        (u_v, C_v, Q_v) = run_solver_S(mesh, dimensions, materials, permi, doping, bias)
+        (u_v, C_v, Q_v, P, E) = run_solver_S(V, mesh, dimensions, materials, permi, doping, bias, max_it)
         Permittivity_points.append(C_v)
         TotalCharge_points.append(Q_v)
         Solution_points.append(u_v)
+        P_it.append(P)
+        E_it.append(E)
+        EXP = C_v
+        F = project(EXP[2], V)
+        print(F(Point(0.5, 1.5)))
+        FE.mark(permi, F(Point(0.5, 1.5)))
 
     else:
 
         print("")
 
-'''
+# Using a pandas data frame to store convergence of P-E
+iterables = [volt_list, list(range(max_it))]
+m_index = pd.MultiIndex.from_product(iterables, names=['Bias', 'Iter'])
+E_R, P_R = np.array(E_it), np.array(P_it)
+space_dat = np.array([E_R.reshape(max_it * len(volt_list), 1), P_R.reshape(max_it * len(volt_list), 1)])
+df = pd.DataFrame(space_dat.T.reshape(max_it * len(volt_list), 2), index=m_index)
+df. columns = ['E', 'P']
+print(P_it)
+print(E_it)
+print(df)
+df.to_csv(FE_model + '_' + 'max_it_' + str(max_it) + '_biasn_' + str(len(volt_list)) + '.csv')
+
+
 # Write Charge and voltage value in file and create capacitance plot
 cap_dat = np.array([volt_list, TotalCharge_points])
 cap_dat = cap_dat.T
 print(cap_dat)
 np.savetxt('capdata' + 'Model:_' + FE_model + '_' + str(epsilon_FE) + '.dat', cap_dat, fmt='%.3f')
 plot_diff_cap('capdata' + 'Model:_' + FE_model + '_' + str(epsilon_FE) + '.dat')
-'''
+
 
 # Plot the first (or any) bias point
 solution_name = 'Model:_' + FE_model + '_' + str(epsilon_FE) + '_.xml'
