@@ -28,12 +28,13 @@ def plot_S_traj(start_in, final_in, *filename):
     plot_routine(0)
 
     for i in range(start_in, final_in + 1):
+
         bias_df = df.loc[idx[volt_list[i]]]
         iteration = bias_df.index.unique(level=0).values
         num_f = 3 * len(iteration)
         rgb = (np.arange(float(num_f)) / num_f).reshape(len(iteration), 3)
         plt.scatter(bias_df['E'], bias_df['P'], s=500, facecolors=rgb)
-        plt.annotate("{0:.2f}".format(volt_list[i]), (bias_df['E'].values[-1], bias_df['P'].values[-1]))
+        plt.annotate("{0:.2f}".format(volt_list[i]), (bias_df['E'].values[-1 ]  , bias_df['P'].values[-1]))
     plt.show()
 
 

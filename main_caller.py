@@ -98,7 +98,7 @@ volt_list_high = [float(x) / 10 for x in range(73, 110, 25)]  # [V]
 volt_list = volt_list_ultra + volt_list_low + volt_list_high
 
 # volt_list = [float(x) for x in np.linspace(-6, 6, 10)]
-volt_list = [0.05, 0.2, 0.4, 0.7, 0.8]
+volt_list = [0.05, 0.1, 0.2, 0.4, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8]
 
 # Main Function: Solve Problem for all defined bias points
 Solution_points = []

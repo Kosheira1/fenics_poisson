@@ -85,7 +85,7 @@ def run_solver_S(V, mesh, dimensions, materials, permi, doping, volt_bias, max_i
                     # Define susceptibility as ratio P/E and update permittivity locally
                     chi_1 = np.interp(elec_y(point_temp), center_E[::-1], center_P[::-1]) / elec_y(point_temp)
 
-                    permi[cells.index()] = 1 + chi_1
+                    permi[cells.index()] = (1 + chi_1) * 0.8 + permi[cells.index()] * 0.2
 
                 if (error_temp > error_max):
                     error_max = error_temp
@@ -113,7 +113,9 @@ def run_solver_S(V, mesh, dimensions, materials, permi, doping, volt_bias, max_i
     rgb = (np.arange(float(num_f)) / num_f).reshape(len(P_space), 3)
     plt.scatter(E_space, P_space, s=500, facecolors=rgb, label='Location in P-E space')
     plt.annotate("{0:.2f}".format(volt_bias), (E_space[-1], P_space[-1]))
-    plt.show()
+    # plt.show()
+
+    Con_M = Permittivity_Tensor_M(materials, permi, 0.0, degree=2)
 
     return(u, Con_M, -flux_y(point), P_space, E_space)
 
