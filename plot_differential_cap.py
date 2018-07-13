@@ -41,7 +41,10 @@ def plot_diff_cap(*filename):
 
     plt.xlabel('Bias Voltage (V)')
     plt.ylabel('Differential Capacitance [F]')
+    plt.axhline(y=1.5, color='r', linewidth=4, linestyle='--', label='Value of series capacitance')
     plt.legend()
+    plt.ylim(ymax=5)
+    plt.ylim(ymin=1)
     plt.grid(True)
     plt.show()
 

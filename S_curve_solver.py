@@ -164,6 +164,6 @@ def plot_routine(num):
     plt.plot(E_values, P_values, 'o', linewidth=3, label='P-E data')
     # plt.plot(xvals, yinterp, '-x', linewidth=2.5, label='Interpolation')
     plt.xlabel('Electric Field (kV/cm)')
-    plt.ylabel('Polarization ' + r"$\frac{fC}{\mu m^2}$")
+    plt.ylabel('Polarization ' + r"$(\frac{fC}{\mu m^2})$")
 
     plt.grid(True)
