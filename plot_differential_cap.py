@@ -12,7 +12,7 @@ def plot_diff_cap(*filename):
     "Numerically differentiating and plotting capacitance"
     # General Plotting Settings
     font = {'weight': 'bold',
-            'size': 19}
+            'size': 25}
     matplotlib.rc('font', **font)
 
     plt.figure(num=10, figsize=(16, 12))

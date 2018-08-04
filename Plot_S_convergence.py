@@ -14,7 +14,7 @@ from S_curve_solver import read_hysteresis, plot_routine
 def plot_S_traj(start_in, final_in, *filename):
     # General Plotting Settings
     font = {'weight': 'bold',
-            'size': 19}
+            'size': 25}
     matplotlib.rc('font', **font)
 
     idx = pd.IndexSlice

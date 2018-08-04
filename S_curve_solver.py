@@ -8,7 +8,7 @@ from solver import solver
 import matplotlib.pyplot as plt
 
 
-def run_solver_S(V, mesh, dimensions, materials, permi, doping, volt_bias, max_it):
+def run_solver_S(V, mesh, dimensions, materials, FE, Pol_r, permi, doping, volt_bias, max_it, rem_flag):
     '''
     Run solver with a S-curve PE-model, see gen_S_lookup.py for details about physical quantities.
     '''
@@ -36,12 +36,20 @@ def run_solver_S(V, mesh, dimensions, materials, permi, doping, volt_bias, max_i
     # Initialize Charge Expression
     f = Constant(-0.0)
 
+    # Setting Permittivity over Mesh function material indicators, we want to separate ferroelectric materials from everything else because the permittivity update loop only affects the former type
+    marked_cells = SubsetIterator(materials, 0)
+    for cells in marked_cells:
+        big_index = cells.index()
+        continue
+
+    remnant_pol = Pol_r[big_index]
     # Initialize Loop Variables, state_init is set to 0 because for zero electric external field, the FE should be in the negative capacitance regime!
-    eta = 1E-2
+    eta = 1E-3
     error = 1E+4
     counter = 0
-    state_init = 0  # 0 for neg-cap region, 1 for lower part, 2 for upper part. The lower
-
+    ratio = 0.8
+    if (volt_bias > 1.5):
+        ratio = 0.6
     # For each bias point we want to track the trajectory of the solution in the P-E space while it converges onto a point on the S-Curve, used for plotting the trajectory and observing convergence!
     P_space = []
     E_space = []
@@ -52,48 +60,57 @@ def run_solver_S(V, mesh, dimensions, materials, permi, doping, volt_bias, max_i
         Con_M = Permittivity_Tensor_M(materials, permi, 0.0, degree=2)
         C = as_matrix(((Con_M[0], Con_M[1]), (Con_M[1], Con_M[2])))
 
+        # Create the Vector Expression for the remnant Polarization, only non-zero in FE material and only exhibited in confinement direction
+        P_r = Remnant_Pol(materials, rem_flag, Pol_r, degree=2)
+        P = as_vector((P_r[0], P_r[1]))
+
+        degree = V.ufl_element().degree()
+        W = VectorFunctionSpace(mesh, 'P', degree)
+        Po = project(P, W)
+
         # Solve Variational Problem
-        u = solver(f, C, V, bcs, 2)
-        (flux_y, elec_y, pol_y) = compute_fields(V, mesh, C, u)
+        u = solver(f, C, Po, V, bcs, 2)
+        (flux_y, elec_y, pol_y) = compute_fields(V, mesh, C, u, P)
 
         # Defining the maximum error over all cells
         error_max = 0
 
-        # Plot state of Ferroelectric, could be different for each point.
+        # Plot state of Ferroelectric, could be different for each single domain material.
         point = (0.5, 1.5)
         P_space.append(pol_y(point))
         E_space.append(elec_y(point))
 
-        # Setting Permittivity over Mesh function material indicators, we want to separate ferroelectric materials from everything else because the permittivity update loop only affects the former type
-        marked_cells = SubsetIterator(materials, 0)
+        # Compare actual state of Polarization vs       Electric field to S_curve data
+        error_temp = abs(np.interp(pol_y(point), P_values, E_values) - elec_y(point))
+        print(error_temp)
 
         # Only iterate over FE material points as only they change permittivity as a function of applied external electric field!
-        for cells in marked_cells:
-            x1 = cells.midpoint().x()
-            y1 = cells.midpoint().y()
-            point_temp = (x1, y1)
+        # Update routine
+        # Loop over all single-domain FE materials
 
-            # Update routine
-            if (state_init == 0):
-                # Compare actual state of Polarization vs Electric field to S_curve data
-                error_temp = abs(np.interp(elec_y(point_temp), center_E[::-1], center_P[::-1]) - pol_y(point_temp))
+        if (rem_flag == 0):
 
-                if(abs(x1 - 0.5) < 2E-2 and abs(y1 - 1.5) < 2E-2):
-                    print(error_temp)
-                    # print(cells.index())
-                if (error_temp > 1E-2):
-                    # Define susceptibility as ratio P/E and update permittivity locally
-                    chi_1 = np.interp(elec_y(point_temp), center_E[::-1], center_P[::-1]) / elec_y(point_temp)
+            if (error_temp > 1E-3):
+                # Define susceptibility as ratio P/E and update permittivity locally
+                chi_1 = pol_y(point) / np.interp(pol_y(point), P_values, E_values)
 
-                    permi[cells.index()] = (1 + chi_1) * 0.8 + permi[cells.index()] * 0.2
+                FE.mark(permi, (1 + chi_1) * ratio + permi[big_index] * (1 - ratio))
 
-                if (error_temp > error_max):
-                    error_max = error_temp
-                    print('y-coordinate of max_value: ' + "{0:.5f}".format(y1))
-                if(error_temp > 8E-1 and counter >= 2):
-                    print('y-coordinate of high_value: ' + "{0:.5f}".format(y1))
+            if (error_temp > error_max):
+                error_max = error_temp
 
-                # TO-DO: State transition condition
+            # TO-DO: State transition condition
+
+        if (rem_flag == 1):
+
+            if (error_temp > 1E-3):
+                # Define susceptibility as ratio P/E and update permittivity locally
+                chi_1 = (pol_y(point) - remnant_pol) / np.interp(pol_y(point), P_values, E_values)
+
+                FE.mark(permi, (1 + chi_1) * ratio + permi[big_index] * (1 - ratio))
+
+            if (error_temp > error_max):
+                error_max = error_temp
 
         print('Maximum Error over all cells: ' + "{0:.5f}".format(error_max))
 
@@ -101,11 +118,11 @@ def run_solver_S(V, mesh, dimensions, materials, permi, doping, volt_bias, max_i
         counter += 1
         error = error_max
 
+    point_out = (0.5, 0.5)
     print('Value of D-Field at point: ' + "{0:.3f}".format(flux_y(point)) + ' (C*m^-2)')
+    print('Value of D-Field at point_out: ' + "{0:.3f}".format(flux_y(point_out)) + ' (C*m^-2)')
     print('Value of E-Field at point: ' + "{0:.3f}".format(elec_y(point)) + ' (V*m^-1)')
     print('Value of P-Field at point: ' + "{0:.3f}".format(pol_y(point)) + ' (C*m^-2)')
-
-    point = (0.5, 1.5)
 
     plot_routine(int(volt_bias))
 
@@ -137,12 +154,12 @@ def read_hysteresis(filename):
     return (E_values, P_values)
 
 
-def compute_fields(V, mesh, C, u):
+def compute_fields(V, mesh, C, u, Pol):
     # Compute D_field, E_field and P_field
     degree = V.ufl_element().degree()
     W = VectorFunctionSpace(mesh, 'P', degree)
 
-    disp_field = project(C * grad(u), W)
+    disp_field = project(C * grad(u) + Pol, W)
     flux_x, flux_y = disp_field.split(deepcopy=True)  # extract components.
 
     electric_field = project(grad(u), W)

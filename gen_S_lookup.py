@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 
+from S_curve_solver import read_hysteresis
+
 # Create a S-curve P-E dependency look-up table with remnant Polarization = 10 uC/cm^2 and Coercive Field = 1 MV/cm
 
 # Hafnium Dioxide Material
@@ -27,6 +29,12 @@ np.savetxt('s_curve_PE.dat', data, fmt='%.3f')
 
 # index = np.array(np.where(abs(P_vals - 0) < 1))
 # print(index[0, 0])
+
+(E_vals, P_vals) = read_hysteresis('s_curve_PE.dat')
+
+primordial_value = 1.5
+E_pol_tho = np.interp(primordial_value, P_vals, E_vals)
+print(E_pol_tho)
 
 # General Plotting Settings
 font = {'weight': 'bold',

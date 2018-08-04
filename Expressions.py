@@ -42,3 +42,22 @@ class Permittivity_Tensor_M(Expression):
 
     def value_shape(self):
         return (3,)
+
+# Defining the elements of the two-dimensional remnant polarization for different operating points.
+
+
+class Remnant_Pol(Expression):
+    def __init__(self, materials, flag, P_R, **kwargs):
+        self.materials, self.flag, self.P_R = materials, flag, P_R
+
+    def eval_cell(self, values, x, cell):
+        # Iterate over ferroelectric material points
+        values[0] = 0.0  # P_r,x
+        if (self.materials[cell.index] == 0) and (self.flag == 1):
+            values[1] = self.P_R[cell.index]
+
+        else:
+            values[1] = 0.0
+
+    def value_shape(self):
+        return(2,)
