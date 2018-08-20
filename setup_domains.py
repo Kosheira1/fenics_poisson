@@ -69,14 +69,31 @@ def setup_boundaries(V, volt_bias, top_coord):
             tol = 1E-14
             return on_boundary and near(x[1], self.top, tol)
 
+    class S_bound(SubDomain):
+        def inside(self, x, on_boundary):
+            tol = 1E-14
+            return on_boundary and near(x[0], 0, tol) and (x[1] > 0.2) and (x[1] < 0.4)
+
+    class D_bound(SubDomain):
+        def inside(self, x, on_boundary):
+            tol = 1E-14
+            return on_boundary and near(x[0], 1.0, tol) and (x[1] > 0.2) and (x[1] < 0.4)
+
     u_L = Expression('0', degree=2)
     u_U = Expression(str(volt_bias), degree=2)
 
+    u_S = Expression('0.4', degree=2)
+    u_D = Expression('0.2', degree=2)
+
     boundary_L = L_Bound()
     boundary_U = U_Bound(top_coord)
+    boundary_S = S_bound()
+    boundary_D = D_bound()
 
     bc_L = DirichletBC(V, u_L, boundary_L)
     bc_U = DirichletBC(V, u_U, boundary_U)
+    bc_S = DirichletBC(V, u_S, boundary_S)
+    bc_D = DirichletBC(V, u_D, boundary_D)
 
     bcs = [bc_L, bc_U]
 

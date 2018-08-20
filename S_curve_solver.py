@@ -49,7 +49,7 @@ def run_solver_S(V, mesh, dimensions, materials, FE, Pol_r, permi, doping, volt_
     counter = 0
     ratio = 0.8
     if (volt_bias > 1.5):
-        ratio = 0.6
+        ratio = 0.2
     # For each bias point we want to track the trajectory of the solution in the P-E space while it converges onto a point on the S-Curve, used for plotting the trajectory and observing convergence!
     P_space = []
     E_space = []
@@ -119,6 +119,23 @@ def run_solver_S(V, mesh, dimensions, materials, FE, Pol_r, permi, doping, volt_
         error = error_max
 
     point_out = (0.5, 0.5)
+
+    class InnerBoundary(SubDomain):
+        def inside(self, x, on_boundary):
+            return near(x[1], 1.5)
+
+    boundary_parts = MeshFunction('size_t', mesh, mesh.topology().dim() - 1, 2)
+    inner_bndr = InnerBoundary()
+    inner_bndr.mark(boundary_parts, 1)
+
+    dS = Measure('dS')(subdomain_data=boundary_parts)
+    n = FacetNormal(mesh)
+    middle = dot(C * grad(u) + P, n)
+    flux_l = middle('+') * dS(1)
+
+    flux_int = assemble(flux_l)
+
+    print('Value of D-Field computed through flux integral at point: ' + "{0:.3f}".format(flux_int) + ' (C*m^-2')
     print('Value of D-Field at point: ' + "{0:.3f}".format(flux_y(point)) + ' (C*m^-2)')
     print('Value of D-Field at point_out: ' + "{0:.3f}".format(flux_y(point_out)) + ' (C*m^-2)')
     print('Value of E-Field at point: ' + "{0:.3f}".format(elec_y(point)) + ' (V*m^-1)')
@@ -134,7 +151,7 @@ def run_solver_S(V, mesh, dimensions, materials, FE, Pol_r, permi, doping, volt_
 
     Con_M = Permittivity_Tensor_M(materials, permi, 0.0, degree=2)
 
-    return(u, Con_M, -flux_y(point), P_space, E_space)
+    return(u, Con_M, -flux_int, P_space, E_space)
 
 
 def read_hysteresis(filename):

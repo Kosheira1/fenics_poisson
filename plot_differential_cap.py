@@ -44,7 +44,7 @@ def plot_diff_cap(*filename):
     plt.axhline(y=1.5, color='r', linewidth=4, linestyle='--', label='Value of series capacitance')
     plt.legend()
     plt.ylim(ymax=5)
-    plt.ylim(ymin=1)
+    plt.ylim(ymin=0.2)
     plt.grid(True)
     plt.show()
 

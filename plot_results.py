@@ -54,7 +54,7 @@ def plot_solution(filename_mesh, *filename_solution):
     # Curve Plot along x=0.5
     plt.figure(num=2, figsize=(16, 12))
     tolerance = 0.01
-    y = np.linspace(0 + tolerance, 2 - tolerance, 1001)
+    y = np.linspace(0 + tolerance, 2 - tolerance, 10001)
     points = [(0.5, y_prime) for y_prime in y]  # Create tuples of 2D points
     pot_line = np.array([u(point) for point in points])
     plt.plot(y, pot_line, 'k', linewidth=2)

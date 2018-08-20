@@ -12,7 +12,7 @@ def solver(f, Permi, Pol, V, bcs, degree=2, u_prev=Constant(-0.0)):
     a = inner(Permi * grad(u), grad(v)) * dx
     g_cj = div(Pol)
 
-    L = f * v * dx + g * v * ds - g_cj * v * dx
+    L = f * v * dx + g * v * ds + g_cj * v * dx
 
     # Compute solution
     u = Function(V)

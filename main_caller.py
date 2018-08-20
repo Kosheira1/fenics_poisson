@@ -14,11 +14,15 @@ from S_curve_solver import *
 from setup_domains import *
 
 # Import plot library
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 import time
 import os
+
+#mpl.rcParams["savefig.directory"] = os.chdir(os.path.dirname(__file__))
+
+
 folder = 'Scurv2'
 if not os.path.exists(folder):
     os.mkdir(folder)
@@ -44,7 +48,7 @@ ins_width = 0.0  # [um] Width of the insulator layer
 FE_width = 1.0  # [um] Width of the ferroelectric layer
 sem_relperm = 1.5  # Relative permittivity of semiconductor channel
 doping = -35.2   # [C/um^2] Acceptor doping concentration
-epsilon_FE = -3.58  # [] Initial Guess for out-of-plane FE permittivity
+epsilon_FE = -3.35  # [] Initial Guess for out-of-plane FE permittivity
 epsilon_0 = 1.0  # [F*um^-1]
 z_thick = 1.0  # [um]
 P_r = 10     # [fC/um^2]
@@ -59,8 +63,11 @@ P_r = 10     # [fC/um^2]
 # domain.set_subdomain(2, mshr.Rectangle(Point(0, sem_width), Point(1, sem_width + FE_width)))
 # mesh = mshr.generate_mesh(domain, 132, "cgal")  # 66, 132
 
-mesh = RectangleMesh(Point(0, 0), Point(1, sem_width + FE_width), 20, 420)
+# mesh = RectangleMesh(Point(0, 0), Point(1, sem_width + FE_width), 20, 420)
+
+mesh = Mesh('testmesh1.xml')
 V = FunctionSpace(mesh, 'P', 1)
+
 
 # Define Interface markers
 # edge_markers = MeshFunction('bool', mesh, 1, False)
@@ -100,7 +107,10 @@ FE_model = 'S_curve'
 
 # volt_list = [float(x) for x in np.linspace(-6, 6, 10)]
 volt_list = [0.05, 0.1, 0.2, 0.4, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 1.00, 1.2, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.25, 2.4, 2.55, 2.7, 2.85, 3.0]
+volt_list = [3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.8, 4.2, 4.6, 4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0, 6.2, 6.4, 6.6]
 
+volt_list = np.linspace(0.10, 8.10, 21)
+#volt_list = [1.5, 1.7, 2, 2.5]
 # volt_list = [7.5]
 
 # Main Function: Solve Problem for all defined bias points
@@ -150,7 +160,7 @@ for idx, bias in enumerate(volt_list):
 
         if (F(Point(0.5, 1.5)) < (-6.25) and rem_flag == 0):
             rem_flag = 1
-            FE.mark(permi, 2.3)
+            FE.mark(permi, 4.0)
         else:
             FE.mark(permi, F(Point(0.5, 1.5)))
 
@@ -189,6 +199,10 @@ plot_diff_cap('capdata' + 'Model:_' + FE_model + '_' + str(epsilon_FE) + '.dat')
 solution_name = 'Model:_' + FE_model + '_' + str(epsilon_FE) + '_.xml'
 u = Solution_points[0]
 File(solution_name) << u
+
+# Plot mesh
+plt.figure(num='mesh')
+plot(mesh)
 
 
 # plot_solution(mesh_name, solution_name)
