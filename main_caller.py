@@ -12,6 +12,8 @@ from refactor_saturation import *
 from refactor_solver import *
 from S_curve_solver import *
 from setup_domains import *
+from Parameter_class import Device
+from coordinate_class import coordinate_data
 
 # Import plot library
 import matplotlib as mpl
@@ -20,10 +22,10 @@ import matplotlib.pyplot as plt
 import time
 import os
 
-#mpl.rcParams["savefig.directory"] = os.chdir(os.path.dirname(__file__))
+# mpl.rcParams["savefig.directory"] = os.chdir(os.path.dirname(__file__))
 
 
-folder = 'Scurv2'
+folder = 'MulFE_Scurv'
 if not os.path.exists(folder):
     os.mkdir(folder)
 os.chdir(folder)
@@ -36,9 +38,9 @@ matplotlib.rc('font', **font)
 """
 User Input Part:
 
-1. Define Geometry and Domains
-2. Create Mesh or Read Mesh from File
-3. Select Material and Carrier Models
+1. Define Geometry and Domains as well as boundary conditions and save list of coordinates for each material
+2. Pass coordinate object to setup_domains.py to create domains
+3. Create Mesh or Read Mesh from File
 4. Create a List of Bias Points
 """
 
@@ -46,58 +48,60 @@ User Input Part:
 sem_width = 1.0  # [um] Width of the semiconductor channel
 ins_width = 0.0  # [um] Width of the insulator layer
 FE_width = 1.0  # [um] Width of the ferroelectric layer
-sem_relperm = 1.5  # Relative permittivity of semiconductor channel
+sem_relperm = 19.4  # Relative permittivity of semiconductor channel
 doping = -35.2   # [C/um^2] Acceptor doping concentration
-epsilon_FE = -3.35  # [] Initial Guess for out-of-plane FE permittivity
-epsilon_0 = 1.0  # [F*um^-1]
+
+epsilon_0 = 8.85E-18  # [F*um^-1]
 z_thick = 1.0  # [um]
-P_r = 10     # [fC/um^2]
+P_r = 10 * 1E-6 * 1E-8   # [C/um^2]
+epsilon_FE = -79.6  # [] Initial Guess for out-of-plane FE permittivity
+number_FE = 2  # [] Number of single-domain FE materials
+
+# Initialize rectangle coordinates
+FE_coords = []
+DE_coords = []
+SEM_coords = []
+ME_coords = []
+
+# Build device from rectangles
+FE_coords.append([0.0, 2.0, 0.5, 1.0])
+FE_coords.append([0.5, 2.0, 1.0, 1.0])
+DE_coords.append([0.0, 1.0, 1.0, 0.0])
+
+# Create coordinate class.
+geom_device = coordinate_data(FE_coords, DE_coords, SEM_coords, ME_coords)
+
+# Initialize out-of plane FE permittivity dictionary
+FE_dict = dict([(key, epsilon_FE) for key in range(number_FE)])
 
 # Define Domains and assign material identifier
-(SC, FE) = setup_domains(sem_width, FE_width)
+domains = setup_domains(geom_device)
 
-# Create a custom mesh or read it from a file, create function space
-# 420
-# domain = mshr.Rectangle(Point(0, 0), Point(1, sem_width + FE_width))
-# domain.set_subdomain(1, mshr.Rectangle(Point(0, 0), Point(1, sem_width)))
-# domain.set_subdomain(2, mshr.Rectangle(Point(0, sem_width), Point(1, sem_width + FE_width)))
-# mesh = mshr.generate_mesh(domain, 132, "cgal")  # 66, 132
-
-# mesh = RectangleMesh(Point(0, 0), Point(1, sem_width + FE_width), 20, 420)
-
-mesh = Mesh('testmesh1.xml')
+mesh = Mesh('newtest.xml')
 V = FunctionSpace(mesh, 'P', 1)
-
 
 # Define Interface markers
 # edge_markers = MeshFunction('bool', mesh, 1, False)
 # LayerBoundary(sem_width).mark(edge_markers, True)
-
 # refine mesh
 # adapt(mesh, edge_markers)
 # mesh = mesh.child()
+
 mesh_name = 'saved_mesh_FEW_' + str(FE_width) + '_SEMW_' + str(sem_width) + '.xml'
 File(mesh_name) << mesh
 
-# Define a Mesh Function which stores material labels. It is used in the solver routine to identify
-materials = MeshFunction('size_t', mesh, 2)
+# Create device object and assign material, permittivity and remnant polarization Mesh Function
+NCFET = Device(domains, geom_device, mesh)
+NCFET.assign_labels()
+NCFET.assign_permittivity(FE_dict, sem_relperm, [])
+NCFET.assign_remnantpol(P_r)
+NCFET.compute_FE_midpointlist()
 
-FE.mark(materials, 0)
-SC.mark(materials, 1)
+file = File('subdomains.pvd')
+file << NCFET.materials
 
 # Store material dimensions
 dimensions = [sem_width, FE_width]
-
-# Define a Mesh Function with initial permittivity values
-permi = MeshFunction('double', mesh, 2)
-
-# Define a Mesh Function and initialize remnant polarization
-Pol_r = MeshFunction('double', mesh, 2)
-
-FE.mark(permi, epsilon_FE)
-FE.mark(Pol_r, P_r)
-SC.mark(permi, sem_relperm)
-SC.mark(Pol_r, 0.0)
 
 # Select supported carrier model: 'Depletion'
 c_model = 'Depletion'
@@ -105,13 +109,9 @@ c_model = 'Depletion'
 # Select supported Ferroelectric model: 'const_negative', 'saturation', 'S_curve'
 FE_model = 'S_curve'
 
-# volt_list = [float(x) for x in np.linspace(-6, 6, 10)]
-volt_list = [0.05, 0.1, 0.2, 0.4, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 1.00, 1.2, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.25, 2.4, 2.55, 2.7, 2.85, 3.0]
-volt_list = [3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.8, 4.2, 4.6, 4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0, 6.2, 6.4, 6.6]
-
-volt_list = np.linspace(0.10, 8.10, 21)
-#volt_list = [1.5, 1.7, 2, 2.5]
-# volt_list = [7.5]
+# volt_list = np.linspace(0.10, 0.5, 2)
+volt_list = np.linspace(50, 500, 9)
+volt_list = [300]
 
 # Main Function: Solve Problem for all defined bias points
 Solution_points = []
@@ -119,8 +119,8 @@ Permittivity_points = []
 TotalCharge_points = []
 P_it = []
 E_it = []
-max_it = 4  # Defines the maximum allowed iteration number for the Ferroelectric permittivity update routin
-rem_flag = 0  # Store for each single-domain FE the segment of the Polarization state. 0 for neg-cap region, 1 for upper part, 2 for lower part.
+max_it = 2  # Defines the maximum allowed iteration number for the Ferroelectric permittivity update routin
+rem_flag_dict = dict([(key, 0) for key in range(number_FE)])  # Store for each single-domain FE the segment of the Polarization state. 0 for neg-cap region, 1 for upper part, 2 for lower part.
 
 start = time.time()
 
@@ -140,29 +140,44 @@ for idx, bias in enumerate(volt_list):
         Solution_points.append(u_v)
 
     elif (FE_model == 'S_curve'):
-        (u_v, C_v, Q_v, P, E) = run_solver_S(V, mesh, dimensions, materials, FE, Pol_r, permi, doping, bias, max_it, rem_flag)
+        (u_v, C_v, Q_v, P, E) = run_solver_S(V, NCFET, FE_dict, dimensions, bias, max_it, rem_flag_dict)
 
         Permittivity_points.append(C_v)
         TotalCharge_points.append(Q_v)
         Solution_points.append(u_v)
 
-        # We create a data structure that stores the convergence of E vs. P for each bias point
         P.extend([P[-1]] * (max_it - len(P)))
         E.extend([E[-1]] * (max_it - len(E)))
-
         P_it.append(P)
         E_it.append(E)
 
+        point_list = NCFET.FE_midpointlist
         # Routine to create initial guess for all single-domain FE materials.
         EXP = C_v
         F = project(EXP[2], V)
-        print(F(Point(0.5, 1.5)))
 
-        if (F(Point(0.5, 1.5)) < (-6.25) and rem_flag == 0):
-            rem_flag = 1
-            FE.mark(permi, 4.0)
-        else:
-            FE.mark(permi, F(Point(0.5, 1.5)))
+        for vals in FE_dict.keys():
+            # We create a data structure that stores the convergence of E vs. P for each bias point
+
+            eval_point = Point(point_list[vals][0], point_list[vals][1])
+            print(F(eval_point))
+
+            # Switch of linearization point, permittivities have to be calibrated with new FE material
+            if (F(eval_point) < (-80.0) and rem_flag_dict[vals] == 0):
+                rem_flag_dict[vals] = 1
+                FE_dict[vals] = 25.0
+                NCFET.update_permittivity(FE_dict)
+
+            else:
+                FE_dict[vals] = F(eval_point)
+                NCFET.update_permittivity(FE_dict)
+
+        FE_dict = dict([(key, FE_dict[0]) for key in range(number_FE)])
+        NCFET.update_permittivity(FE_dict)
+
+        plt.figure(num=120)
+        plot(F)
+        plt.show()
 
     else:
 
@@ -172,34 +187,35 @@ end = time.time()
 
 print('The elapsed time is: ' + str(end - start) + ' seconds.')
 # Using a pandas data frame to store convergence of P-E
-iterables = [volt_list, list(range(max_it))]
-m_index = pd.MultiIndex.from_product(iterables, names=['Bias', 'Iter'])
+iterables = [volt_list, list(range(max_it)), list(range(number_FE))]
+m_index = pd.MultiIndex.from_product(iterables, names=['Bias', 'Iter', 'FE_num'])
 E_R, P_R = np.array(E_it), np.array(P_it)
 
 print(E_R)
 print(P_R)
-space_dat = np.array([E_R.reshape(max_it * len(volt_list), 1), P_R.reshape(max_it * len(volt_list), 1)])
-df = pd.DataFrame(space_dat.T.reshape(max_it * len(volt_list), 2), index=m_index)
+space_dat = np.array([E_R.reshape(max_it * len(volt_list) * number_FE, 1), P_R.reshape(max_it * len(volt_list) * number_FE, 1)])
+df = pd.DataFrame(space_dat.T.reshape(max_it * len(volt_list) * number_FE, 2), index=m_index)
 df. columns = ['E', 'P']
 print(P_it)
 print(E_it)
 print(df)
 df.to_csv(FE_model + '_' + 'max_it_' + str(max_it) + '_biasn_' + str(len(volt_list)) + '.csv')
 
-
+'''
 # Write Charge and voltage value in file and create capacitance plot
 cap_dat = np.array([volt_list, TotalCharge_points])
 cap_dat = cap_dat.T
 print(cap_dat)
 np.savetxt('capdata' + 'Model:_' + FE_model + '_' + str(epsilon_FE) + '.dat', cap_dat, fmt='%.3f')
 plot_diff_cap('capdata' + 'Model:_' + FE_model + '_' + str(epsilon_FE) + '.dat')
+'''
 
-
-# Plot the first (or any) bias point
+# Plot the first (or any) bias point to xml and vtu file
 solution_name = 'Model:_' + FE_model + '_' + str(epsilon_FE) + '_.xml'
 u = Solution_points[0]
 File(solution_name) << u
-
+solution_name = 'Model:_' + FE_model + '_' + str(epsilon_FE) + '_.pvd'
+File(solution_name) << u
 # Plot mesh
 plt.figure(num='mesh')
 plot(mesh)

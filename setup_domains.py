@@ -3,36 +3,46 @@ from fenics import *
 # Method to define domains and interfaces
 
 
-def setup_domains(width, FE_width):
-    "Setup the layer structure in the order from depth-coordinate=0 to highest. Make sure to provide lower and upper bound"
-    SC = ep_layer(0.0, width)
-    FE = Ferroelectric(width, width + FE_width)
+def setup_domains(geometry):
+    "Setup the 2-D structure given a coordinate data class"
 
-    return (SC, FE)
+    keys = ['Ferroelectric', 'Dielectric', 'Semiconductor', 'Metal']
+    domain_dict = dict([(key, []) for key in keys])
+
+    for FE_coords in geometry.data_dict['Ferroelectric']:
+        domain_dict['Ferroelectric'].append(Ferroelectric(FE_coords))
+    for DE_coords in geometry.data_dict['Dielectric']:
+        domain_dict['Dielectric'].append(ep_layer(DE_coords))
+    for SE_coords in geometry.data_dict['Semiconductor']:
+        domain_dict['Semicondcutor'].append(ep_layer(SE_coords))
+    for ME_coords in geometry.data_dict['Metal']:
+        domain_dict['Metal'].append(ep_layer(ME_coords))
+
+    return domain_dict
 
 # Semiconductor Channel
 
 
 class ep_layer(SubDomain):
-    def __init__(self, lower, upper):
-        self.lower, self.upper = lower, upper
-        self.tol = 1E-12
+    def __init__(self, coords_list):
+        self.coords_list = coords_list
+        self.tol = 1E-10
         SubDomain.__init__(self)  # Call base class constructor
 
     def inside(self, x, on_boundary):
-        return (x[1] <= self.upper + self.tol) and (x[1] >= self.lower - self.tol)
+        return (x[1] <= self.coords_list[1] + self.tol) and (x[1] >= self.coords_list[3] - self.tol) and(x[0] <= self.coords_list[2] + self.tol) and (x[0] >= self.coords_list[0] - self.tol)
 
 # Ferroelectric Insulator
 
 
 class Ferroelectric(SubDomain):
-    def __init__(self, lower, upper):
-        self.lower, self.upper = lower, upper
-        self.tol = 1E-12
+    def __init__(self, coords_list):
+        self.coords_list = coords_list
+        self.tol = 1E-10
         SubDomain.__init__(self)  # Call base class constructor
 
     def inside(self, x, on_boundary):
-        return (x[1] <= self.upper + self.tol) and (x[1] >= self.lower - self.tol)
+        return (x[1] <= self.coords_list[1] + self.tol) and (x[1] >= self.coords_list[3] - self.tol) and(x[0] <= self.coords_list[2] + self.tol) and (x[0] >= self.coords_list[0] - self.tol)
 
 # Boundary between Layers
 
@@ -72,18 +82,18 @@ def setup_boundaries(V, volt_bias, top_coord):
     class S_bound(SubDomain):
         def inside(self, x, on_boundary):
             tol = 1E-14
-            return on_boundary and near(x[0], 0, tol) and (x[1] > 0.2) and (x[1] < 0.4)
+            return on_boundary and near(x[0], 0, tol) and (x[1] > 0.2 - tol) and (x[1] < 0.3 + tol)
 
     class D_bound(SubDomain):
         def inside(self, x, on_boundary):
             tol = 1E-14
-            return on_boundary and near(x[0], 1.0, tol) and (x[1] > 0.2) and (x[1] < 0.4)
+            return on_boundary and near(x[0], 1.0, tol) and (x[1] > 0.2 - tol) and (x[1] < 0.3 + tol)
 
-    u_L = Expression('0', degree=2)
+    u_L = Expression('0+10*x[0]', degree=2)
     u_U = Expression(str(volt_bias), degree=2)
 
-    u_S = Expression('0.4', degree=2)
-    u_D = Expression('0.2', degree=2)
+    u_S = Expression('20.0', degree=2)
+    u_D = Expression('20.0', degree=2)
 
     boundary_L = L_Bound()
     boundary_U = U_Bound(top_coord)

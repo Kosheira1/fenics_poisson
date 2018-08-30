@@ -1,5 +1,5 @@
 from fenics import *
-
+from Parameter_class import Device
 # Define charge function based on doping and depletion width (depletion approx. only)
 # Input arguments: thickness of channel, doping concentration, depletion width
 
@@ -19,26 +19,23 @@ class Charge(Expression):
 
 
 class Permittivity_Tensor_M(Expression):
-    def __init__(self, materials, permi, flux, **kwargs):
-        self.materials, self.permi, self.flux = materials, permi, flux
+    def __init__(self, materials, permi, domains, **kwargs):
+        self.materials, self.permi, self.domains = materials, permi, domains
+        self.FE_layers = self.domains['Ferroelectric']
+        self.length = len(self.FE_layers)
 
     def eval_cell(self, values, x, cell):
         # Iterate over ferroelectric material points
-        if self.materials[cell.index] == 0:
-            values[0] = 1.0  # e_xx
+        if self.materials[cell.index] < self.length:
+            values[0] = 18.3  # e_xx
             values[1] = 0.0  # e_xy = e_yx
             values[2] = self.permi[cell.index]  # e_yy
 
-        # Iterate over semiconductor channel material points
-        elif self.materials[cell.index] == 1:
+        # Iterate over other material points
+        else:
             values[0] = self.permi[cell.index]  # e_xx
             values[1] = 0.0  # e_xy = e_yx
             values[2] = self.permi[cell.index]  # e_yy
-        # Rest should be vaccuum
-        else:
-            values[0] = 1.0  # e_xx
-            values[1] = 0.0  # e_xy = e_yx
-            values[2] = 1.0  # e_yy
 
     def value_shape(self):
         return (3,)
@@ -47,13 +44,16 @@ class Permittivity_Tensor_M(Expression):
 
 
 class Remnant_Pol(Expression):
-    def __init__(self, materials, flag, P_R, **kwargs):
-        self.materials, self.flag, self.P_R = materials, flag, P_R
+    def __init__(self, materials, flag, P_R, domains, ** kwargs):
+        self.materials, self.flag, self.P_R, self.domains = materials, flag, P_R, domains
+        self.FE_layers = self.domains['Ferroelectric']
+        self.length = len(self.FE_layers)
 
     def eval_cell(self, values, x, cell):
         # Iterate over ferroelectric material points
         values[0] = 0.0  # P_r,x
-        if (self.materials[cell.index] == 0) and (self.flag == 1):
+        identifier = self.materials[cell.index]
+        if (identifier < self.length) and (self.flag[identifier] == 1):
             values[1] = self.P_R[cell.index]
 
         else:

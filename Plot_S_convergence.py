@@ -20,7 +20,7 @@ def plot_S_traj(start_in, final_in, *filename):
     idx = pd.IndexSlice
 
     for names in filename:
-        df = pd.read_csv(names, index_col=[0, 1])
+        df = pd.read_csv(names, index_col=[0, 1, 2])
 
     print(df)
     volt_list = df.index.unique(level=0).values
@@ -29,7 +29,7 @@ def plot_S_traj(start_in, final_in, *filename):
 
     for i in range(start_in, final_in + 1):
 
-        bias_df = df.loc[idx[volt_list[i]]]
+        bias_df = df.loc[idx[volt_list[i]], :, 0]
         iteration = bias_df.index.unique(level=0).values
         num_f = 3 * len(iteration)
         rgb = (np.arange(float(num_f)) / num_f).reshape(len(iteration), 3)

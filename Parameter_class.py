@@ -1,4 +1,5 @@
 from fenics import *
+from coordinate_class import coordinate_data
 
 # Class that stores all of the domains with their respective Mesh Function representation. Allows to look up material properties, assigns mesh function labels. This class is needed to keep track of all single domain FE materials
 
@@ -10,7 +11,7 @@ class Device():
         self.permi = MeshFunction('double', self.mesh, 2)
         self.Pol_r = MeshFunction('double', self.mesh, 2)
         # Also store global remnant polarization.
-        self.P_G = 10.0
+        self.P_G = 10.0 * 1E-14
         self.FE_midpointlist = []
 
     def assign_labels(self):
@@ -72,13 +73,15 @@ class Device():
         marked_cells = SubsetIterator(self.materials, num)
         for cells in marked_cells:
             big_index = cells.index()
-            continue
+            break
 
         return big_index
 
     def compute_FE_midpointlist(self):
         self.FE_midpointlist = []
-        FE_layers = self.domains['Ferroelectric']
-        for idx, vals in enumerate(FE_layers):
-            point = (0.5, 1.5)
+        FE_coords = self.coordinates.data_dict['Ferroelectric']
+        for idx, vals in enumerate(FE_coords):
+            xval = 0.5 * (vals[0] + vals[2])
+            yval = 0.5 * (vals[1] + vals[3])
+            point = (xval, yval)
             self.FE_midpointlist.append(point)
