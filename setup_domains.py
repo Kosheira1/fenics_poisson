@@ -14,7 +14,7 @@ def setup_domains(geometry):
     for DE_coords in geometry.data_dict['Dielectric']:
         domain_dict['Dielectric'].append(ep_layer(DE_coords))
     for SE_coords in geometry.data_dict['Semiconductor']:
-        domain_dict['Semicondcutor'].append(ep_layer(SE_coords))
+        domain_dict['Semiconductor'].append(ep_layer(SE_coords))
     for ME_coords in geometry.data_dict['Metal']:
         domain_dict['Metal'].append(ep_layer(ME_coords))
 

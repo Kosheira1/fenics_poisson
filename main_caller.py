@@ -11,6 +11,7 @@ from plot_results import *
 from refactor_saturation import *
 from refactor_solver import *
 from S_curve_solver import *
+from S_curve_newton import *
 from setup_domains import *
 from Parameter_class import Device
 from coordinate_class import coordinate_data
@@ -119,7 +120,7 @@ Permittivity_points = []
 TotalCharge_points = []
 P_it = []
 E_it = []
-max_it = 2  # Defines the maximum allowed iteration number for the Ferroelectric permittivity update routin
+max_it = 1  # Defines the maximum allowed iteration number for the Ferroelectric permittivity update routin
 rem_flag_dict = dict([(key, 0) for key in range(number_FE)])  # Store for each single-domain FE the segment of the Polarization state. 0 for neg-cap region, 1 for upper part, 2 for lower part.
 
 start = time.time()
@@ -140,7 +141,7 @@ for idx, bias in enumerate(volt_list):
         Solution_points.append(u_v)
 
     elif (FE_model == 'S_curve'):
-        (u_v, C_v, Q_v, P, E) = run_solver_S(V, NCFET, FE_dict, dimensions, bias, max_it, rem_flag_dict)
+        (u_v, C_v, Q_v, P, E) = newton_solver_S(V, NCFET, FE_dict, dimensions, bias, max_it, rem_flag_dict)
 
         Permittivity_points.append(C_v)
         TotalCharge_points.append(Q_v)
@@ -185,7 +186,7 @@ for idx, bias in enumerate(volt_list):
 
 end = time.time()
 
-print('The elapsed time is: ' + str(end - start) + ' seconds.')
+print('The elapsed time is: ' + '{0:.2f}'.format(end - start) + ' seconds.')
 # Using a pandas data frame to store convergence of P-E
 iterables = [volt_list, list(range(max_it)), list(range(number_FE))]
 m_index = pd.MultiIndex.from_product(iterables, names=['Bias', 'Iter', 'FE_num'])

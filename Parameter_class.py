@@ -12,6 +12,8 @@ class Device():
         self.Pol_r = MeshFunction('double', self.mesh, 2)
         # Also store global remnant polarization.
         self.P_G = 10.0 * 1E-14
+        # Create Mesh Function for Doping levels
+        self.Doping = MeshFunction('double', self.mesh, 2)
         self.FE_midpointlist = []
 
     def assign_labels(self):
