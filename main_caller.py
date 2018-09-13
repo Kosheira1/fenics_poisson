@@ -188,17 +188,14 @@ end = time.time()
 
 print('The elapsed time is: ' + '{0:.2f}'.format(end - start) + ' seconds.')
 # Using a pandas data frame to store convergence of P-E
-iterables = [volt_list, list(range(max_it)), list(range(number_FE))]
+iterables = [volt_list, list(range(max_it + 1)), list(range(number_FE))]
 m_index = pd.MultiIndex.from_product(iterables, names=['Bias', 'Iter', 'FE_num'])
 E_R, P_R = np.array(E_it), np.array(P_it)
 
-print(E_R)
-print(P_R)
-space_dat = np.array([E_R.reshape(max_it * len(volt_list) * number_FE, 1), P_R.reshape(max_it * len(volt_list) * number_FE, 1)])
-df = pd.DataFrame(space_dat.T.reshape(max_it * len(volt_list) * number_FE, 2), index=m_index)
+space_dat = np.array([E_R.reshape((max_it + 1) * len(volt_list) * number_FE, 1), P_R.reshape((max_it + 1) * len(volt_list) * number_FE, 1)])
+df = pd.DataFrame(space_dat.T.reshape((max_it + 1) * len(volt_list) * number_FE, 2), index=m_index)
 df. columns = ['E', 'P']
-print(P_it)
-print(E_it)
+
 print(df)
 df.to_csv(FE_model + '_' + 'max_it_' + str(max_it) + '_biasn_' + str(len(volt_list)) + '.csv')
 

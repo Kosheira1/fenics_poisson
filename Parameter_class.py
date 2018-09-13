@@ -15,6 +15,7 @@ class Device():
         # Create Mesh Function for Doping levels
         self.Doping = MeshFunction('double', self.mesh, 2)
         self.FE_midpointlist = []
+        self.epsilon_0 = 8.85E-18  # [F*um^-1]s
 
     def assign_labels(self):
         FE_layers = self.domains['Ferroelectric']
