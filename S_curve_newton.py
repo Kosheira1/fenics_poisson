@@ -55,7 +55,7 @@ def newton_solver_S(V, NCFET, FE_dict, dimensions, volt_bias, max_it, rem_flag_d
         E_sing_iter = []
         error_temp = []
         # Update permittivity for all single-domain FE materials using a newton Iteration
-        newton_step(NCFET, FE_dict, error)
+        newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_values, P_space, E_space)
 
         # Prepare Expressions for solver
         (C, Po, P) = FEM_solverexpressions(V, NCFET, rem_flag_dict)

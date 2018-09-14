@@ -120,7 +120,7 @@ def initial_solve(V, f, bcs, NCFET, rem_flag_dict, E_values, P_values, FE_dict, 
     return error
 
 
-def single_step_solve():
+def single_step_solve(V, f, NCFET, rem_flag_dict, bcs, E_values, P_values):
     '''
     This function solves the electrostatic problem and returns the error, used in the context of filling the Jacobian matrix for the newton update step
     '''
@@ -132,24 +132,45 @@ def single_step_solve():
     (flux_y, elec_y, pol_y) = compute_fields(V, NCFET.mesh, C, u, P, NCFET.epsilon_0)
 
     error = []
+    point_list = NCFET.FE_midpointlist
     # Compute error
-    for vals in FE_dict.keys():
-        point = point_list[vals]
+    for point in point_list:
         error.append(abs(np.interp(pol_y(point), P_values, E_values) * 1E-2 - elec_y(point) * 1E-2))
 
     return error
 
 
-def newton_step(NCFET, FE_dict, error):
+def newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_values, P_space, E_space):
     '''
     This function analyses the error locally and uses a newton method to update the NCFET permittivity matrix
     '''
+    # Original permittivity values
+    primordial_vals = list(FE_dict.values())
+
+    # System size
+    N = len(FE_dict.keys())
+
     # Initializing Jacobi Matrix
-    J_mat = np.zeros(shape=(len(FE_dict.keys()), len(FE_dict.keys())))
+    J_mat = np.zeros(shape=(N, N))
+
     # Stores the differential change in permittivity that should be applied to compute partial derivatives
-    h_vect = np.zeros(shape=(len(FE_dict.keys()), 1))
+    h_vect = np.array(primordial_vals) / 1E+4
+    print(h_vect)
+
     for i in FE_dict.keys():
-        h_vect[i] = list(FE_dict.values())[i] / 1E+4
+        error_temp = []
+
+        FE_dict[i] += h_vect[i]
+        NCFET.update_permittivity(FE_dict)
+
+        error_temp = single_step_solve(V, f, NCFET, rem_flag_dict, bcs, E_values, P_values)
+
+        for k in error_temp:
+            print(k)
+
+        # Reset original permittivity
+        FE_dict = dict([(key, primordial_vals[key]) for key in range(N)])
+        NCFET.update_permittivity(FE_dict)
 
     # What up bitch
 
