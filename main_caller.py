@@ -55,7 +55,7 @@ doping = -35.2   # [C/um^2] Acceptor doping concentration
 epsilon_0 = 8.85E-18  # [F*um^-1]
 z_thick = 1.0  # [um]
 P_r = 10 * 1E-6 * 1E-8   # [C/um^2]
-epsilon_FE = -79.6  # [] Initial Guess for out-of-plane FE permittivity
+epsilon_FE = -75.0  # [] Initial Guess for out-of-plane FE permittivity
 number_FE = 2  # [] Number of single-domain FE materials
 
 # Initialize rectangle coordinates
@@ -67,6 +67,8 @@ ME_coords = []
 # Build device from rectangles
 FE_coords.append([0.0, 2.0, 0.5, 1.0])
 FE_coords.append([0.5, 2.0, 1.0, 1.0])
+# FE_coords.append([0.5, 2.0, 0.75, 1.0])
+# FE_coords.append([0.75, 2.0, 1.0, 1.0])
 DE_coords.append([0.0, 1.0, 1.0, 0.0])
 
 # Create coordinate class.
@@ -112,7 +114,7 @@ FE_model = 'S_curve'
 
 # volt_list = np.linspace(0.10, 0.5, 2)
 volt_list = np.linspace(50, 500, 9)
-volt_list = [300]
+volt_list = [300, 325, 330]
 
 # Main Function: Solve Problem for all defined bias points
 Solution_points = []
@@ -120,7 +122,7 @@ Permittivity_points = []
 TotalCharge_points = []
 P_it = []
 E_it = []
-max_it = 1  # Defines the maximum allowed iteration number for the Ferroelectric permittivity update routin
+max_it = 10  # Defines the maximum allowed iteration number for the Ferroelectric permittivity update routin
 rem_flag_dict = dict([(key, 0) for key in range(number_FE)])  # Store for each single-domain FE the segment of the Polarization state. 0 for neg-cap region, 1 for upper part, 2 for lower part.
 
 start = time.time()
@@ -164,7 +166,7 @@ for idx, bias in enumerate(volt_list):
             print(F(eval_point))
 
             # Switch of linearization point, permittivities have to be calibrated with new FE material
-            if (F(eval_point) < (-80.0) and rem_flag_dict[vals] == 0):
+            if (F(eval_point) < (-90.0) and rem_flag_dict[vals] == 0):
                 rem_flag_dict[vals] = 1
                 FE_dict[vals] = 25.0
                 NCFET.update_permittivity(FE_dict)

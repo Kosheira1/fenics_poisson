@@ -146,6 +146,10 @@ def newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_val
     '''
     # Original permittivity values
     primordial_vals = list(FE_dict.values())
+    print('Primordial values are:' + str(primordial_vals))
+
+    # Damping coefficient
+    damp = 1.0
 
     # System size
     N = len(FE_dict.keys())
@@ -154,8 +158,7 @@ def newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_val
     J_mat = np.zeros(shape=(N, N))
 
     # Stores the differential change in permittivity that should be applied to compute partial derivatives
-    h_vect = np.array(primordial_vals) / 1E+4
-    print(h_vect)
+    h_vect = np.array(primordial_vals) / 1E+5
 
     for i in FE_dict.keys():
         error_temp = []
@@ -165,15 +168,26 @@ def newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_val
 
         error_temp = single_step_solve(V, f, NCFET, rem_flag_dict, bcs, E_values, P_values)
 
-        for k in error_temp:
-            print(k)
+        for k, vals in enumerate(error_temp):
+            # Numerical differentiation and filling of J_mat, fill it up hmmm yummy
+            dfkdfi = (vals - error[k]) / h_vect[i]
+            J_mat[k][i] = dfkdfi
 
         # Reset original permittivity
         FE_dict = dict([(key, primordial_vals[key]) for key in range(N)])
         NCFET.update_permittivity(FE_dict)
 
-    # What up bitch
+    # Inverting Jacobian and performing update step.
+    x_n = np.array(list(FE_dict.values()))
+    f_x_n = np.array(error)
+    J_inv = np.linalg.inv(J_mat)
+    dist = np.matmul(J_inv, f_x_n)
 
-    FE_dict[0] = FE_dict[0] - 1.0 * 0.206
-    FE_dict[1] = FE_dict[1] + 1.0 * 0.127
+    print(dist)
+
+    x_n -= damp * dist
+
+    FE_dict = dict([(key, x_n[key]) for key in range(N)])
     NCFET.update_permittivity(FE_dict)
+
+    return FE_dict

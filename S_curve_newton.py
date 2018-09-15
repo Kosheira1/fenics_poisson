@@ -43,7 +43,7 @@ def newton_solver_S(V, NCFET, FE_dict, dimensions, volt_bias, max_it, rem_flag_d
     error = initial_solve(V, f, bcs, NCFET, rem_flag_dict, E_values, P_values, FE_dict, P_space, E_space)
 
     # Initialize Loop Variables, state_init is set to 0 because for zero electric external field, the FE should be in the negative capacitance regime!
-    eta = 1E-3
+    eta = 1E-4
     counter = 0
 
     point_list = NCFET.FE_midpointlist
@@ -55,7 +55,7 @@ def newton_solver_S(V, NCFET, FE_dict, dimensions, volt_bias, max_it, rem_flag_d
         E_sing_iter = []
         error_temp = []
         # Update permittivity for all single-domain FE materials using a newton Iteration
-        newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_values, P_space, E_space)
+        FE_dict = newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_values, P_space, E_space)
 
         # Prepare Expressions for solver
         (C, Po, P) = FEM_solverexpressions(V, NCFET, rem_flag_dict)
@@ -72,6 +72,9 @@ def newton_solver_S(V, NCFET, FE_dict, dimensions, volt_bias, max_it, rem_flag_d
 
         print('\n'.join('{0:{0}d}  :  {1:.3e}'.format(k, vals) for k, vals in enumerate(error_temp)))
 
+        # Print Error Norm
+        print('Iteration ' + str(counter) + ': Error norm: ' + '{0:.3e}'.format(np.linalg.norm(error_temp)))
+
         # Update Loop variables
         counter += 1
         error = error_temp
@@ -81,6 +84,8 @@ def newton_solver_S(V, NCFET, FE_dict, dimensions, volt_bias, max_it, rem_flag_d
         E_space.append(E_sing_iter)
 
     point_out = (0.5, 0.5)
+
+    # Create a Gaussian surface that encloses the gate metal and compute total gate charge
 
     class InnerBoundary(SubDomain):
         def inside(self, x, on_boundary):

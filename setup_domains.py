@@ -26,7 +26,7 @@ def setup_domains(geometry):
 class ep_layer(SubDomain):
     def __init__(self, coords_list):
         self.coords_list = coords_list
-        self.tol = 1E-10
+        self.tol = 10E-10
         SubDomain.__init__(self)  # Call base class constructor
 
     def inside(self, x, on_boundary):
@@ -38,7 +38,7 @@ class ep_layer(SubDomain):
 class Ferroelectric(SubDomain):
     def __init__(self, coords_list):
         self.coords_list = coords_list
-        self.tol = 1E-10
+        self.tol = 10E-10
         SubDomain.__init__(self)  # Call base class constructor
 
     def inside(self, x, on_boundary):

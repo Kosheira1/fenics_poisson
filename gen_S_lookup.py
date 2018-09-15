@@ -23,7 +23,7 @@ E_c = 1E+2    # (V/um)
 alph = -3 * np.sqrt(3.0) * E_c / (4 * P_r)
 bet = 3 * np.sqrt(3.0) * E_c / (8 * P_r ** 3)
 
-P_vals = np.linspace(-20E-14, 20E-14, 100)
+P_vals = np.linspace(-20E-14, 20E-14, 500)
 
 E_vals = 2 * alph * P_vals + 4 * bet * P_vals ** 3
 
