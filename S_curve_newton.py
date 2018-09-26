@@ -43,7 +43,7 @@ def newton_solver_S(V, NCFET, FE_dict, dimensions, volt_bias, max_it, rem_flag_d
     error = initial_solve(V, f, bcs, NCFET, rem_flag_dict, E_values, P_values, FE_dict, P_space, E_space)
 
     # Initialize Loop Variables, state_init is set to 0 because for zero electric external field, the FE should be in the negative capacitance regime!
-    eta = 1E-4
+    eta = 5E-4
     counter = 0
 
     point_list = NCFET.FE_midpointlist
@@ -108,11 +108,11 @@ def newton_solver_S(V, NCFET, FE_dict, dimensions, volt_bias, max_it, rem_flag_d
     print('Value of E-Field at point: ' + "{0:.3e}".format(elec_y(point)) + ' (V*m^-1)')
     print('Value of P-Field at point: ' + "{0:.3e}".format(pol_y(point)) + ' (C*m^-2)')
 
-    plot_routine(2 * int(volt_bias))
+    # plot_routine(2 * int(volt_bias))
     intermediate_S_plot(0, max_it, P_space, E_space, volt_bias, perm_plot=False)
 
-    plot_routine(2 * int(volt_bias) + 1)
-    intermediate_S_plot(1, max_it, P_space, E_space, volt_bias, perm_plot=True)
+    # plot_routine(2 * int(volt_bias) + 1)
+    intermediate_S_plot(1, max_it, P_space, E_space, volt_bias, perm_plot=False)
 
     Con_M = Permittivity_Tensor_M(NCFET.materials, NCFET.permi, NCFET.domains, degree=2)
 

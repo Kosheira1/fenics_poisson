@@ -76,7 +76,7 @@ def intermediate_S_plot(FE_index, max_it, P_space, E_space, volt_bias, perm_plot
 
 def FEM_solverexpressions(V, NCFET, rem_flag_dict):
     # Create the Permittivity Tensor for the anisotropic Poisson equation, FE material only exhibits field dependent permittivity in confinement direction!
-    Con_M = Permittivity_Tensor_M(NCFET.materials, NCFET.permi, NCFET.domains, degree=2)
+    Con_M = Permittivity_Tensor_M(NCFET.materials, NCFET.permi, NCFET.domains)
     C = as_matrix(((Con_M[0], Con_M[1]), (Con_M[1], Con_M[2])))
 
     # Create the Vector Expression for the remnant Polarization, only non-zero in FE material and only exhibited in confinement direction
@@ -146,7 +146,8 @@ def newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_val
     '''
     # Original permittivity values
     primordial_vals = list(FE_dict.values())
-    print('Primordial values are:' + str(primordial_vals))
+    print('\n'.join('{0:.2f} '.format(k) for k in primordial_vals))
+    # print('Initial guess switching direction permittivities for each FE:' + str(primordial_vals) + "{0:.3f}".format(primordial_vals))
 
     # Damping coefficient
     damp = 1.0
@@ -158,7 +159,7 @@ def newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_val
     J_mat = np.zeros(shape=(N, N))
 
     # Stores the differential change in permittivity that should be applied to compute partial derivatives
-    h_vect = np.array(primordial_vals) / 1E+5
+    h_vect = np.array(primordial_vals) / 1E+4
 
     for i in FE_dict.keys():
         error_temp = []

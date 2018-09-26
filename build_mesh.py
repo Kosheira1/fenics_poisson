@@ -17,9 +17,9 @@ FE_coords.append([0.0, 0.007, 0.045, 0.002])
 FE_coords.append([0.045, 0.007, 0.09, 0.002])
 DE_coords.append([0.0, 0.002, 0.09, 0.0])
 SEM_coords.append([0.0, 0.0, 0.09, -0.03])
-SEM_coords.append([0.09, 0.0, 0.18, -0.03])
-SEM_coords.append([-0.09, 0.0, 0.0, -0.03])
-SEM_coords.append([-0.09, -0.03, 0.18, -0.33])
+SEM_coords.append([0.09, 0.0, 0.14, -0.03])
+SEM_coords.append([-0.05, 0.0, 0.0, -0.03])
+SEM_coords.append([-0.05, -0.03, 0.14, -0.07])
 
 # Geometry and domains
 geom_device = coordinate_data(FE_coords, DE_coords, SEM_coords, ME_coords)

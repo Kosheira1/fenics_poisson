@@ -18,11 +18,14 @@ class Charge(Expression):
 # Defining the elements of the two-dimensional dielectric tensor through the material mesh function, values depend on previously computed polarization fields.
 
 
-class Permittivity_Tensor_M(Expression):
+class Permittivity_Tensor_M(UserExpression):
+    # def __init__(self, materials, permi, domains, **kwargs):
     def __init__(self, materials, permi, domains, **kwargs):
+
         self.materials, self.permi, self.domains = materials, permi, domains
         self.FE_layers = self.domains['Ferroelectric']
         self.length = len(self.FE_layers)
+        super().__init__(**kwargs)
 
     def eval_cell(self, values, x, cell):
         # Iterate over ferroelectric material points
@@ -43,11 +46,12 @@ class Permittivity_Tensor_M(Expression):
 # Defining the elements of the two-dimensional remnant polarization for different operating points.
 
 
-class Remnant_Pol(Expression):
+class Remnant_Pol(UserExpression):
     def __init__(self, materials, flag, P_R, domains, ** kwargs):
         self.materials, self.flag, self.P_R, self.domains = materials, flag, P_R, domains
         self.FE_layers = self.domains['Ferroelectric']
         self.length = len(self.FE_layers)
+        super().__init__(**kwargs)
 
     def eval_cell(self, values, x, cell):
         # Iterate over ferroelectric material points

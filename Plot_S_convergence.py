@@ -24,17 +24,24 @@ def plot_S_traj(start_in, final_in, *filename):
 
     print(df)
     volt_list = df.index.unique(level=0).values
-    print(volt_list)
-    plot_routine(0)
+    FE_list = df.index.unique(level=2).values
 
-    for i in range(start_in, final_in + 1):
+    for FE_num in FE_list:
+        plot_routine(FE_num)
 
-        bias_df = df.loc[idx[volt_list[i]], :, 0]
-        iteration = bias_df.index.unique(level=0).values
-        num_f = 3 * len(iteration)
-        rgb = (np.arange(float(num_f)) / num_f).reshape(len(iteration), 3)
-        plt.scatter(bias_df['E'], bias_df['P'], s=500, facecolors=rgb)
-        plt.annotate("{0:.2f}".format(volt_list[i]), (bias_df['E'].values[-1] - 0.2, bias_df['P'].values[-1]))
+        for i in range(start_in, final_in + 1):
+
+            bias_df = df.loc[idx[volt_list[i]], :, FE_num]
+            print(bias_df)
+            iteration = bias_df.index.unique(level=1).values
+
+            num_f = 3 * len(iteration)
+            rgb = (np.arange(float(num_f)) / num_f).reshape(len(iteration), 3)
+            plt.scatter(bias_df['E'], bias_df['P'], s=500, facecolors=rgb)
+            plt.annotate("{0:.2f}".format(volt_list[i]), (bias_df['E'].values[-1] - 0.2, bias_df['P'].values[-1]))
+            plt.title('Convergence for FE number: ' + str(FE_num), y=1.02)
+            plt.gcf().subplots_adjust(bottom=0.15)
+
     plt.show()
 
 
