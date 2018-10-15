@@ -91,8 +91,8 @@ V = FunctionSpace(mesh, 'P', 1)
 # adapt(mesh, edge_markers)
 # mesh = mesh.child()
 
-mesh_name = 'saved_mesh_FEW_' + str(FE_width) + '_SEMW_' + str(sem_width) + '.xml'
-File(mesh_name) << mesh
+# mesh_name = 'saved_mesh_FEW_' + str(FE_width) + '_SEMW_' + str(sem_width) + '.xml'
+# File(mesh_name) << mesh
 
 # Create device object and assign material, permittivity and remnant polarization Mesh Function
 NCFET = Device(domains, geom_device, mesh)

@@ -12,4 +12,4 @@ class coordinate_data():
         for co in self.SEM_coords:
             self.data_dict['Semiconductor'].append(co)
         for co in self.MET_coords:
-            self.ddata_dict['Metal'].append(co)
+            self.data_dict['Metal'].append(co)
