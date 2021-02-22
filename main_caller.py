@@ -12,6 +12,7 @@ from refactor_saturation import *
 from refactor_solver import *
 from S_curve_solver import *
 from S_curve_newton import *
+from S_curve_gradientdescent import *
 from setup_domains import *
 from Parameter_class import Device
 from coordinate_class import coordinate_data
@@ -56,7 +57,7 @@ doping = -35.2   # [C/um^2] Acceptor doping concentration
 epsilon_0 = 8.85E-18  # [F*um^-1]
 z_thick = 1.0  # [um]
 P_r = 10 * 1E-6 * 1E-8   # [C/um^2]
-epsilon_FE = -67.0  # [] Initial Guess for out-of-plane FE permittivity
+epsilon_FE = -44.0  # [] Initial Guess for out-of-plane FE permittivity
 number_FE = 2  # [] Number of single-domain FE materials
 
 # Initialize rectangle coordinates
@@ -115,7 +116,7 @@ FE_model = 'S_curve'
 
 # volt_list = np.linspace(0.10, 0.5, 2)
 volt_list = np.linspace(50, 500, 9)
-volt_list = [210, 230, 250, 260]
+volt_list = [110, 120, 130, 140]
 
 # Main Function: Solve Problem for all defined bias points
 Solution_points = []
@@ -123,7 +124,7 @@ Permittivity_points = []
 TotalCharge_points = []
 P_it = []
 E_it = []
-max_it = 5  # Defines the maximum allowed iteration number for the Ferroelectric permittivity update routin
+max_it = 9  # Defines the maximum allowed iteration number for the Ferroelectric permittivity update routin
 rem_flag_dict = dict([(key, 0) for key in range(number_FE)])  # Store for each single-domain FE the segment of the Polarization state. 0 for neg-cap region, 1 for upper part, 2 for lower part.
 
 start = time.time()
@@ -144,7 +145,7 @@ for idx, bias in enumerate(volt_list):
         Solution_points.append(u_v)
 
     elif (FE_model == 'S_curve'):
-        (u_v, C_v, Q_v, P, E) = newton_solver_S(V, NCFET, FE_dict, dimensions, bias, max_it, rem_flag_dict)
+        (u_v, C_v, Q_v, P, E) = gradient_solver_S(V, NCFET, FE_dict, dimensions, bias, max_it, rem_flag_dict)
 
         Permittivity_points.append(C_v)
         TotalCharge_points.append(Q_v)

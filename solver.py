@@ -17,6 +17,14 @@ def solver(f, Permi, Pol, V, bcs, degree=2, u_prev=Constant(-0.0)):
 
     # Compute solution
     u = Function(V)
-    solve(a == L, u, bcs, solver_parameters=dict(linear_solver='default', preconditioner='default'))  # THe dictionary argument allows for the use of different Krylov solvers
+    problem = LinearVariationalProblem(a, L, u, bcs)
+    solver = LinearVariationalSolver(problem)
+    solver.parameters['linear_solver'] = 'default'
+    solver.parameters['preconditioner'] = 'ilu'
+
+    # solver.parameters['krylov_solver'] = 'default'
+    solver.solve()
+
+    # solve(a == L, u, bcs, solver_parameters=dict(linear_solver='default', preconditioner='default'))  # THe dictionary argument allows for the use of different Krylov solvers
 
     return u

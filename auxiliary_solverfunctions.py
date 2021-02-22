@@ -170,7 +170,7 @@ def newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_val
         error_temp = single_step_solve(V, f, NCFET, rem_flag_dict, bcs, E_values, P_values)
 
         for k, vals in enumerate(error_temp):
-            # Numerical differentiation and filling of J_mat, fill it up hmmm yummy
+            # Numerical differentiation and filling of J_mat, fill it up
             dfkdfi = (vals - error[k]) / h_vect[i]
             J_mat[k][i] = dfkdfi
 
@@ -192,3 +192,91 @@ def newton_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_val
     NCFET.update_permittivity(FE_dict)
 
     return FE_dict
+
+
+def gradient_step(V, f, NCFET, FE_dict, error, rem_flag_dict, bcs, E_values, P_values, P_space, E_space, pre_eps, pre_grad, counter, volt_bias):
+    '''
+    This function analyses the error locally and uses a gradient descent method to update the NCFET permittivity matrix
+    '''
+    # Determine System size
+    N = len(FE_dict.keys())
+
+    # Original permittivity values
+    primordial_vals = list(FE_dict.values())
+    # print('\n'.join('{0:.2f} '.format(k) for k in primordial_vals))
+
+    # Original gradient values
+    prim_gradient = [pre_grad[x] for x in range(len(pre_grad))]
+
+    # Stores the differential change in permittivity that should be applied to compute partial derivatives
+    h_vect = np.array(primordial_vals) / 1E+4
+
+    # Compute norm of previous error
+    n_error = np.linalg.norm(error)
+
+    # Initialize gradient of error norm
+    gradient = [0 for key in range(len(FE_dict.keys()))]
+
+    for i in FE_dict.keys():
+        error_temp = []
+
+        FE_dict[i] += h_vect[i]
+        NCFET.update_permittivity(FE_dict)
+
+        error_temp = single_step_solve(V, f, NCFET, rem_flag_dict, bcs, E_values, P_values)
+
+        n_error_temp = np.linalg.norm(error_temp)
+        gradient[i] = (n_error_temp - n_error) / (h_vect[i])
+
+        # Reset original permittivity
+        FE_dict = dict([(key, primordial_vals[key]) for key in range(N)])
+        NCFET.update_permittivity(FE_dict)
+
+    if counter == 0:
+        # Initial step size
+        step_size = 100.0
+        if volt_bias > 135:
+            step_size = 60.0
+    else:
+        # Implementing secant equation approximation for step_size
+        difference = np.array(primordial_vals) - np.array(pre_eps)
+        grad_dif = np.array(gradient) - np.array(prim_gradient)
+        numerator = np.dot(difference, grad_dif)
+        normalization = np.linalg.norm(grad_dif) ** 2
+        # print('The eps difference is' + repr(difference))
+        step_size = numerator / normalization
+
+        if counter < 2:
+            step_size = 45.0
+        elif counter >= 2 and counter < 5:
+            step_size = 22
+        elif counter >= 5 and counter < 7:
+            step_size = 7.5
+        elif counter >= 7:
+            step_size = 3.2
+        print('The step size is: ' + '{0:.2f}'.format(step_size))
+
+    x_n = np.array(list(FE_dict.values()))
+    dist = step_size * np.array(gradient)
+    x_n -= dist
+
+    FE_dict = dict([(key, x_n[key]) for key in range(N)])
+    NCFET.update_permittivity(FE_dict)
+
+    print('Updated state of FE permittivity:')
+    print('\n'.join('{0:.2f} '.format(k) for k in list(FE_dict.values())))
+
+    print('Current state of FE permittivity:')
+    print('\n'.join('{0:.2f} '.format(k) for k in primordial_vals))
+
+    print('Previous state of FE permittivity:')
+    print('\n'.join('{0:.2f} '.format(k) for k in pre_eps))
+
+    print('Gradient n:')
+    print('\n'.join('{0:.3f} '.format(k) for k in gradient))
+
+    print('Gradient n-1:')
+    print('\n'.join('{0:.3f} '.format(k) for k in prim_gradient))
+
+    # returning eps_{n+1}, eps_{n} and grad_{n}
+    return(FE_dict, primordial_vals, gradient)
